@@ -26,9 +26,11 @@ static constexpr char CURSOR_UP[]              = {27, 91, 65, '\0'};
 static constexpr char CURSOR_DOWN[]            = {27, 91, 66, '\0'};
 static constexpr char CURSOR_ONE_STEP_RIGHT[]  = {27, 91, 67, '\0'};
 static constexpr char CURSOR_ONE_STEP_LEFT[]   = {27, 91, 68, '\0'};
-static constexpr char SPACE[]                  = {32, '\0'};
-static constexpr char ESC[]                    = {27, '\0'};
 static constexpr char ENTER[]                  = {10, '\0'};
+static constexpr char ESC[]                    = {27, '\0'};
+static constexpr char SPACE[]                  = {32, '\0'};
+static constexpr char QUOTATION_MARK[]         = {34, '\0'};
+static constexpr char BACK_SLASH[]             = {92, '\0'};
 static constexpr char BACK_SPACE[]             = {127, '\0'};
 
 static constexpr char DELETE[]                 = {27, 91, 51, 126, '\0'};
@@ -72,11 +74,6 @@ const KeyboardHandlerUnixImpl::KeyMap KeyboardHandlerUnixImpl::DEFAULT_STATIC_KE
   {KeyCode::CURSOR_DOWN,  xterm_seq::CURSOR_DOWN},
   {KeyCode::CURSOR_RIGHT, xterm_seq::CURSOR_ONE_STEP_RIGHT},
   {KeyCode::CURSOR_LEFT,  xterm_seq::CURSOR_ONE_STEP_LEFT},
-  {KeyCode::SPACE,        xterm_seq::SPACE},
-  {KeyCode::ESCAPE,       xterm_seq::ESC},
-  {KeyCode::ENTER,        xterm_seq::ENTER},
-  {KeyCode::BACK_SPACE,   xterm_seq::BACK_SPACE},
-
   {KeyCode::DELETE,       xterm_seq::DELETE},
   {KeyCode::END,          xterm_seq::END},
   {KeyCode::PG_DOWN,      xterm_seq::PG_DOWN},
@@ -110,72 +107,105 @@ const KeyboardHandlerUnixImpl::KeyMap KeyboardHandlerUnixImpl::DEFAULT_STATIC_KE
   {KeyCode::SHIFT_F11,    xterm_seq::SHIFT_F11},
   {KeyCode::SHIFT_F12,    xterm_seq::SHIFT_F12},
 
-  {KeyCode::A,            "a"},
-  {KeyCode::B,            "b"},
-  {KeyCode::C,            "c"},
-  {KeyCode::D,            "d"},
-  {KeyCode::E,            "e"},
-  {KeyCode::F,            "f"},
-  {KeyCode::G,            "g"},
-  {KeyCode::H,            "h"},
-  {KeyCode::I,            "i"},
-  {KeyCode::J,            "j"},
-  {KeyCode::K,            "k"},
-  {KeyCode::L,            "l"},
-  {KeyCode::M,            "m"},
-  {KeyCode::N,            "n"},
-  {KeyCode::O,            "o"},
-  {KeyCode::P,            "p"},
-  {KeyCode::Q,            "q"},
-  {KeyCode::R,            "r"},
-  {KeyCode::S,            "s"},
-  {KeyCode::T,            "t"},
-  {KeyCode::U,            "u"},
-  {KeyCode::V,            "v"},
-  {KeyCode::W,            "w"},
-  {KeyCode::X,            "x"},
-  {KeyCode::Y,            "y"},
-  {KeyCode::Z,            "z"},
+  {KeyCode::ENTER,        xterm_seq::ENTER},  // 10
+  {KeyCode::ESCAPE,       xterm_seq::ESC},    // 27
+  {KeyCode::SPACE,        xterm_seq::SPACE},  // 32
 
-  {KeyCode::CAPITAL_A,    "A"},
-  {KeyCode::CAPITAL_B,    "B"},
-  {KeyCode::CAPITAL_C,    "C"},
-  {KeyCode::CAPITAL_D,    "D"},
-  {KeyCode::CAPITAL_E,    "E"},
-  {KeyCode::CAPITAL_F,    "F"},
-  {KeyCode::CAPITAL_G,    "G"},
-  {KeyCode::CAPITAL_H,    "H"},
-  {KeyCode::CAPITAL_I,    "I"},
-  {KeyCode::CAPITAL_J,    "J"},
-  {KeyCode::CAPITAL_K,    "K"},
-  {KeyCode::CAPITAL_L,    "L"},
-  {KeyCode::CAPITAL_M,    "M"},
-  {KeyCode::CAPITAL_N,    "N"},
-  {KeyCode::CAPITAL_O,    "O"},
-  {KeyCode::CAPITAL_P,    "P"},
-  {KeyCode::CAPITAL_Q,    "Q"},
-  {KeyCode::CAPITAL_R,    "R"},
-  {KeyCode::CAPITAL_S,    "S"},
-  {KeyCode::CAPITAL_T,    "T"},
-  {KeyCode::CAPITAL_U,    "U"},
-  {KeyCode::CAPITAL_V,    "V"},
-  {KeyCode::CAPITAL_W,    "W"},
-  {KeyCode::CAPITAL_X,    "X"},
-  {KeyCode::CAPITAL_Y,    "Y"},
-  {KeyCode::CAPITAL_Z,    "Z"},
-
-  {KeyCode::NUMBER_1,     "1"},
-  {KeyCode::NUMBER_2,     "2"},
-  {KeyCode::NUMBER_3,     "3"},
-  {KeyCode::NUMBER_4,     "4"},
-  {KeyCode::NUMBER_5,     "5"},
-  {KeyCode::NUMBER_6,     "6"},
-  {KeyCode::NUMBER_7,     "7"},
-  {KeyCode::NUMBER_8,     "8"},
-  {KeyCode::NUMBER_9,     "9"},
-  {KeyCode::NUMBER_0,     "0"},
-  {KeyCode::MINUS,        "-"},
-  {KeyCode::EQUAL_SIGN,   "="},
+  {KeyCode::EXCLAMATION_MARK,     "!"},  // 33
+  {KeyCode::QUOTATION_MARK,   xterm_seq::QUOTATION_MARK},  // 34
+  {KeyCode::HASHTAG_SIGN,         "#"},  // 35  shift + KeyCode::NUMBER_3 = 51 - 16 = 35
+  {KeyCode::DOLLAR_SIGN,          "$"},  // 36  shift + KeyCode::NUMBER_4 = 52 - 16 = 36
+  {KeyCode::PERCENT_SIGN,         "%"},  // 37  shift + KeyCode::NUMBER_5 = 53 - 16 = 37
+  {KeyCode::AMPERSAND,            "&"},  // 38  shift + KeyCode::NUMBER_7 = 55 - 17 = 38
+  {KeyCode::APOSTROPHE,           "'"},  // 39
+  {KeyCode::OPENING_PARENTHESIS,  "("},  // 40  shift + KeyCode::NUMBER_9 = 57 - 17 = 40
+  {KeyCode::CLOSING_PARENTHESIS,  ")"},  // 41  shift + KeyCode::NUMBER_0 = 48 - 7  = 41
+  {KeyCode::STAR,                 "*"},  // 42  shift + KeyCode::NUMBER_8 = 56 - 14 = 42
+  {KeyCode::PLUS,                 "+"},  // 43
+  {KeyCode::COMMA,                ","},  // 44
+  {KeyCode::MINUS,                "-"},  // 45
+  {KeyCode::DOT,                  "."},  // 46
+  {KeyCode::RIGHT_SLASH,          "/"},  // 47
+  {KeyCode::NUMBER_0,             "0"},  // 48
+  {KeyCode::NUMBER_1,             "1"},  // 49
+  {KeyCode::NUMBER_2,             "2"},  // 50
+  {KeyCode::NUMBER_3,             "3"},  // 51
+  {KeyCode::NUMBER_4,             "4"},  // 52
+  {KeyCode::NUMBER_5,             "5"},  // 53
+  {KeyCode::NUMBER_6,             "6"},  // 54
+  {KeyCode::NUMBER_7,             "7"},  // 55
+  {KeyCode::NUMBER_8,             "8"},  // 56
+  {KeyCode::NUMBER_9,             "9"},  // 57
+  {KeyCode::COLON,                ":"},  // 58
+  {KeyCode::SEMICOLON,            ";"},  // 59
+  {KeyCode::LEFT_ANGLE_BRACKET,   "<"},  // 60
+  {KeyCode::EQUAL_SIGN,           "="},  // 61
+  {KeyCode::RIGHT_ANGLE_BRACKET,  ">"},  // 62
+  {KeyCode::QUESTION_MARK,        "?"},  // 63
+  {KeyCode::AT,                   "@"},  // 64
+  {KeyCode::CAPITAL_A,            "A"},  // 65  'a' = 97 - 32 = 65
+  {KeyCode::CAPITAL_B,            "B"},  // 66
+  {KeyCode::CAPITAL_C,            "C"},  // 67
+  {KeyCode::CAPITAL_D,            "D"},  // 68
+  {KeyCode::CAPITAL_E,            "E"},  // 69
+  {KeyCode::CAPITAL_F,            "F"},  // 70
+  {KeyCode::CAPITAL_G,            "G"},  // 71
+  {KeyCode::CAPITAL_H,            "H"},  // 72
+  {KeyCode::CAPITAL_I,            "I"},  // 73
+  {KeyCode::CAPITAL_J,            "J"},  // 74
+  {KeyCode::CAPITAL_K,            "K"},  // 75
+  {KeyCode::CAPITAL_L,            "L"},  // 76
+  {KeyCode::CAPITAL_M,            "M"},  // 77
+  {KeyCode::CAPITAL_N,            "N"},  // 78
+  {KeyCode::CAPITAL_O,            "O"},  // 79
+  {KeyCode::CAPITAL_P,            "P"},  // 80
+  {KeyCode::CAPITAL_Q,            "Q"},  // 81
+  {KeyCode::CAPITAL_R,            "R"},  // 82
+  {KeyCode::CAPITAL_S,            "S"},  // 83
+  {KeyCode::CAPITAL_T,            "T"},  // 84
+  {KeyCode::CAPITAL_U,            "U"},  // 85
+  {KeyCode::CAPITAL_V,            "V"},  // 86
+  {KeyCode::CAPITAL_W,            "W"},  // 87
+  {KeyCode::CAPITAL_X,            "X"},  // 88
+  {KeyCode::CAPITAL_Y,            "Y"},  // 89
+  {KeyCode::CAPITAL_Z,            "Z"},  // 90  'z' = 122 - 32 = 90
+  {KeyCode::LEFT_SQUARE_BRACKET,  "["},  // 91
+  {KeyCode::BACK_SLASH,           xterm_seq::BACK_SLASH},  // 92
+  {KeyCode::RIGHT_SQUARE_BRACKET, "]"},  // 93
+  {KeyCode::CARET,                "^"},  // 94  shift + KeyCode::NUMBER_6 = 54 + 40 = 94
+  {KeyCode::UNDERSCORE_SIGN,      "_"},  // 95
+  {KeyCode::GRAVE_ACCENT_SIGN,    "`"},  // 96
+  {KeyCode::A,                    "a"},  // 97
+  {KeyCode::B,                    "b"},  // 98
+  {KeyCode::C,                    "c"},  // 99
+  {KeyCode::D,                    "d"},  // 100
+  {KeyCode::E,                    "e"},  // 101
+  {KeyCode::F,                    "f"},  // 102
+  {KeyCode::G,                    "g"},  // 103
+  {KeyCode::H,                    "h"},  // 104
+  {KeyCode::I,                    "i"},  // 105
+  {KeyCode::J,                    "j"},  // 106
+  {KeyCode::K,                    "k"},  // 107
+  {KeyCode::L,                    "l"},  // 108
+  {KeyCode::M,                    "m"},  // 109
+  {KeyCode::N,                    "n"},  // 110
+  {KeyCode::O,                    "o"},  // 111
+  {KeyCode::P,                    "p"},  // 112
+  {KeyCode::Q,                    "q"},  // 113
+  {KeyCode::R,                    "r"},  // 114
+  {KeyCode::S,                    "s"},  // 115
+  {KeyCode::T,                    "t"},  // 116
+  {KeyCode::U,                    "u"},  // 117
+  {KeyCode::V,                    "v"},  // 118
+  {KeyCode::W,                    "w"},  // 119
+  {KeyCode::X,                    "x"},  // 120
+  {KeyCode::Y,                    "y"},  // 121
+  {KeyCode::Z,                    "z"},  // 122
+  {KeyCode::LEFT_CURLY_BRACKET,   "{"},  // 123
+  {KeyCode::VERTICAL_BAR,         "|"},  // 124
+  {KeyCode::RIGHT_CURLY_BRACKET,  "{"},  // 125
+  {KeyCode::TILDA,                "~"},  // 126
+  {KeyCode::BACK_SPACE,           xterm_seq::BACK_SPACE},  // 127
 };
 /* *INDENT-ON* */
 
