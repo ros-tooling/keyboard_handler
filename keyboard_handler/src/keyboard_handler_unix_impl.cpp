@@ -43,7 +43,7 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
 : KeyboardHandlerUnixImpl(read, isatty, tcgetattr, tcsetattr) {}
 
 std::tuple<KeyboardHandlerBase::KeyCode, KeyboardHandlerBase::KeyModifiers>
-KeyboardHandlerUnixImpl::parse_input(char * buff, ssize_t read_bytes)
+KeyboardHandlerUnixImpl::parse_input(const char * buff, ssize_t read_bytes)
 {
 #ifdef PRINT_DEBUG_INFO
   std::cout << "Read " << read_bytes << " bytes: ";

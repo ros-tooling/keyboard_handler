@@ -13,11 +13,12 @@
 // limitations under the License.
 
 #ifndef _WIN32
-#include <string>
-#include <memory>
 #include <algorithm>
-#include <utility>
 #include <condition_variable>
+#include <memory>
+#include <string>
+#include <utility>
+#include <tuple>
 #include "gmock/gmock.h"
 #include "fake_recorder.hpp"
 #include "fake_player.hpp"
@@ -119,6 +120,11 @@ public:
     return callbacks_.size();
   }
 
+  std::tuple<KeyCode, KeyModifiers> parse_input_mock(const char * buff, ssize_t read_bytes)
+  {
+    return parse_input(buff, read_bytes - 1);  // -1 to strip out null terminator
+  }
+
 private:
   std::weak_ptr<MockSystemCalls> system_calls_stub_;
 };
@@ -212,6 +218,28 @@ TEST_F(KeyboardHandlerUnixTest, stdin_is_not_a_terminal_device) {
   auto callback_handle = keyboard_handler.add_key_press_callback(
     callback, KeyboardHandler::KeyCode::E, KeyboardHandler::KeyModifiers::NONE);
   EXPECT_EQ(callback_handle, KeyboardHandler::invalid_handle);
+}
+
+TEST_F(KeyboardHandlerUnixTest, check_input_parser) {
+  MockKeyboardHandler keyboard_handler(read_fn_);
+  // Test for CTRL + ALT key modifiers
+  const char CTRL_ALT_K[] = {27, 11, '\0'};
+  auto key_code_and_modifiers = keyboard_handler.parse_input_mock(CTRL_ALT_K, sizeof(CTRL_ALT_K));
+  KeyboardHandler::KeyCode pressed_key_code = std::get<0>(key_code_and_modifiers);
+  KeyboardHandler::KeyModifiers pressed_key_modifiers = std::get<1>(key_code_and_modifiers);
+  EXPECT_EQ(pressed_key_code, KeyboardHandler::KeyCode::K);
+  EXPECT_TRUE(pressed_key_modifiers && KeyboardHandler::KeyModifiers::CTRL);
+  EXPECT_TRUE(pressed_key_modifiers && KeyboardHandler::KeyModifiers::ALT);
+
+  // Test for SHIFT + ALT key modifiers
+  const char SHIFT_ALT_K[] = {27, 75, '\0'};
+  key_code_and_modifiers = keyboard_handler.parse_input_mock(SHIFT_ALT_K, sizeof(SHIFT_ALT_K));
+  pressed_key_code = std::get<0>(key_code_and_modifiers);
+  pressed_key_modifiers = std::get<1>(key_code_and_modifiers);
+  EXPECT_EQ(pressed_key_code, KeyboardHandler::KeyCode::K);
+  KeyboardHandler::KeyModifiers expected_key_modifiers =
+    KeyboardHandler::KeyModifiers::SHIFT | KeyboardHandler::KeyModifiers::ALT;
+  EXPECT_EQ(pressed_key_modifiers, expected_key_modifiers);
 }
 
 TEST_F(KeyboardHandlerUnixTest, weak_ptr_in_callbacks) {

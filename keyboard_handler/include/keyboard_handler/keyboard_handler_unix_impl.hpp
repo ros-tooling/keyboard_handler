@@ -63,6 +63,12 @@ protected:
     const tcgetattrFunction & tcgetattr_fn,
     const tcsetattrFunction & tcsetattr_fn);
 
+  /// \brief Input parser
+  /// \param buff null terminated buffer read out from std::in after key press
+  /// \param read_bytes length of the buffer in bytes without null terminator
+  /// \return tuple key code and code modifiers mask
+  std::tuple<KeyCode, KeyModifiers> parse_input(const char * buff, ssize_t read_bytes);
+
   /// \brief Data type for mapping KeyCode enum value to the expecting sequence of characters
   /// returning by terminal.
   struct KeyMap
@@ -79,8 +85,6 @@ protected:
   static const size_t STATIC_KEY_MAP_LENGTH;
 
 private:
-  std::tuple<KeyCode, KeyModifiers> parse_input(char * buff, ssize_t buff_length);
-
   std::thread key_handler_thread_;
   std::atomic_bool exit_;
   const int stdin_fd_;
