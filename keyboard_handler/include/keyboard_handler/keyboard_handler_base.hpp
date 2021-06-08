@@ -207,18 +207,6 @@ enum class KeyboardHandlerBase::KeyCode: uint32_t
   F10,
   F11,
   F12,
-  SHIFT_F1,
-  SHIFT_F2,
-  SHIFT_F3,
-  SHIFT_F4,
-  SHIFT_F5,
-  SHIFT_F6,
-  SHIFT_F7,
-  SHIFT_F8,
-  SHIFT_F9,
-  SHIFT_F10,
-  SHIFT_F11,
-  SHIFT_F12,
   END_OF_KEY_CODE_ENUM
 };
 
@@ -347,18 +335,6 @@ static const KeyCodeToStrMap ENUM_KEY_TO_STR_MAP[] {
   {KeyboardHandlerBase::KeyCode::F10, "F10"},
   {KeyboardHandlerBase::KeyCode::F11, "F11"},
   {KeyboardHandlerBase::KeyCode::F12, "F12"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F1, "SHIFT_F1"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F2, "SHIFT_F2"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F3, "SHIFT_F3"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F4, "SHIFT_F4"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F5, "SHIFT_F5"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F6, "SHIFT_F6"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F7, "SHIFT_F7"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F8, "SHIFT_F8"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F9, "SHIFT_F9"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F10, "SHIFT_F10"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F11, "SHIFT_F11"},
-  {KeyboardHandlerBase::KeyCode::SHIFT_F12, "SHIFT_F12"},
 };
 
 /// \brief Translate KeyCode enum value to it's string representation.

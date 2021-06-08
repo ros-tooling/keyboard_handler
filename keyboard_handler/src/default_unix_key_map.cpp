@@ -94,19 +94,6 @@ const KeyboardHandlerUnixImpl::KeyMap KeyboardHandlerUnixImpl::DEFAULT_STATIC_KE
   {KeyCode::F11,          xterm_seq::F11},
   {KeyCode::F12,          xterm_seq::F12},
 
-  {KeyCode::SHIFT_F1,     xterm_seq::SHIFT_F1},
-  {KeyCode::SHIFT_F2,     xterm_seq::SHIFT_F2},
-  {KeyCode::SHIFT_F3,     xterm_seq::SHIFT_F3},
-  {KeyCode::SHIFT_F4,     xterm_seq::SHIFT_F4},
-  {KeyCode::SHIFT_F5,     xterm_seq::SHIFT_F5},
-  {KeyCode::SHIFT_F6,     xterm_seq::SHIFT_F6},
-  {KeyCode::SHIFT_F7,     xterm_seq::SHIFT_F7},
-  {KeyCode::SHIFT_F8,     xterm_seq::SHIFT_F8},
-  {KeyCode::SHIFT_F9,     xterm_seq::SHIFT_F9},
-  {KeyCode::SHIFT_F10,    xterm_seq::SHIFT_F10},
-  {KeyCode::SHIFT_F11,    xterm_seq::SHIFT_F11},
-  {KeyCode::SHIFT_F12,    xterm_seq::SHIFT_F12},
-
   {KeyCode::ENTER,        xterm_seq::ENTER},  // 10
   {KeyCode::ESCAPE,       xterm_seq::ESC},    // 27
   {KeyCode::SPACE,        xterm_seq::SPACE},  // 32
