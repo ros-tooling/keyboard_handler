@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <atomic>
 #include <thread>
+#include <tuple>
 #include <stdexcept>
 #include "keyboard_handler/visibility_control.hpp"
 #include "keyboard_handler_base.hpp"
@@ -78,6 +79,8 @@ protected:
   static const size_t STATIC_KEY_MAP_LENGTH;
 
 private:
+  std::tuple<KeyCode, KeyModifiers> parse_input(char * buff, ssize_t buff_length);
+
   std::thread key_handler_thread_;
   std::atomic_bool exit_;
   const int stdin_fd_;

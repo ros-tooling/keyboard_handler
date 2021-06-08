@@ -67,7 +67,7 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl(
             WinKeyCode win_key_code{WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
             int ch = getch_fn();
             win_key_code.first = ch;
-            // When reading a function key or an arrow key, each function must be called twice;
+            // When reading a function key or an arrow key, getch function must be called twice;
             // the first call returns 0 or 0xE0, and the second call returns the actual key code.
             // https://docs.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2012/078sfkak(v=vs.110)
             if (ch == 0 || ch == 0xE0) {  // 0xE0 == 224
@@ -77,10 +77,12 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl(
             }
             KeyCode pressed_key_code = win_key_code_to_enum(win_key_code);
 
+            KeyModifiers key_modifiers{};  // TODO(morlov): Add parser for KeyModifiers
+
             std::lock_guard<std::mutex> lk(callbacks_mutex_);
-            auto range = callbacks_.equal_range(pressed_key_code);
+            auto range = callbacks_.equal_range(KeyAndModifiers{pressed_key_code, key_modifiers});
             for (auto it = range.first; it != range.second; ++it) {
-              it->second.callback(it->first);
+              it->second.callback(pressed_key_code, key_modifiers);
             }
             // Wait for 0.1 sec to yield processor resources for another threads
             std::this_thread::sleep_for(std::chrono::milliseconds(100));

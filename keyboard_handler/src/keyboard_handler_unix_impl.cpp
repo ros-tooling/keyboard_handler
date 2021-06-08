@@ -13,13 +13,14 @@
 // limitations under the License.
 
 #ifndef _WIN32
-#include <termios.h>
 #include <unistd.h>
-#include <string>
+#include <termios.h>
 #include <algorithm>
 #include <csignal>
-#include <iostream>
 #include <exception>
+#include <iostream>
+#include <string>
+#include <tuple>
 #include "keyboard_handler/keyboard_handler_unix_impl.hpp"
 
 namespace
@@ -40,6 +41,63 @@ void quit(int sig)
 KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
 : KeyboardHandlerUnixImpl(read, isatty, tcgetattr, tcsetattr) {}
+
+std::tuple<KeyboardHandlerBase::KeyCode, KeyboardHandlerBase::KeyModifiers>
+KeyboardHandlerUnixImpl::parse_input(char * buff, ssize_t read_bytes)
+{
+#ifdef PRINT_DEBUG_INFO
+  std::cout << "Read " << read_bytes << " bytes: ";
+  if (read_bytes > 1) {
+    std::cout << "[] = {";
+    for (ssize_t i = 0; i < read_bytes; ++i) {
+      std::cout << static_cast<int>(buff[i]) << ", ";
+    }
+    std::cout << "'\\0'};";
+  } else {
+    std::cout << " : " << static_cast<int>(buff[0]) << " : '" << buff[0] << "'";
+  }
+  std::cout << std::endl;
+#endif
+  KeyCode pressed_key_code = KeyCode::UNKNOWN;
+  KeyModifiers key_modifiers = KeyModifiers::NONE;
+
+  std::string buff_to_search = buff;
+  ssize_t bytes_in_keycode = read_bytes;
+
+  if (read_bytes == 2 && buff[0] == 27) {
+    key_modifiers = KeyModifiers::ALT;
+    buff_to_search = buff[1];
+    bytes_in_keycode = 1;
+  }
+
+  if (bytes_in_keycode == 1 && buff_to_search[0] >= 'A' && buff_to_search[0] <= 'Z') {
+    char original_key_code = buff_to_search[0];
+    original_key_code += 32;
+    buff_to_search = original_key_code;
+    key_modifiers = key_modifiers | KeyModifiers::SHIFT;
+  }
+
+  auto key_map_it = key_codes_map_.find(buff_to_search);
+  if (key_map_it != key_codes_map_.end()) {
+    pressed_key_code = key_map_it->second;
+  }
+
+  // first search in key_codes_map_
+  if (pressed_key_code == KeyCode::UNKNOWN && bytes_in_keycode == 1 &&
+    buff_to_search[0] >= 0 && buff_to_search[0] <= 26)
+  {
+    char original_key_code = buff_to_search[0];
+    original_key_code += 96;    // small chars
+    buff_to_search = original_key_code;
+    key_modifiers = key_modifiers | KeyModifiers::CTRL;
+
+    auto key_map_it = key_codes_map_.find(buff_to_search);
+    if (key_map_it != key_codes_map_.end()) {
+      pressed_key_code = key_map_it->second;
+    }
+  }
+  return std::make_tuple(pressed_key_code, key_modifiers);
+}
 
 KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
@@ -111,16 +169,25 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
             // Do nothing. 0 means read() returned by timeout.
           } else {  // read_bytes > 0
             buff[std::min(BUFF_LEN - 1, static_cast<size_t>(read_bytes))] = '\0';
-            KeyCode pressed_key_code = KeyCode::UNKNOWN;
-            std::lock_guard<std::mutex> lk(callbacks_mutex_);
-            auto key_map_it = key_codes_map_.find(buff);
-            if (key_map_it != key_codes_map_.end()) {
-              pressed_key_code = key_map_it->second;
-            }
 
-            auto range = callbacks_.equal_range(pressed_key_code);
+            auto key_code_and_modifiers = parse_input(buff, read_bytes);
+
+            KeyCode pressed_key_code = std::get<0>(key_code_and_modifiers);
+            KeyModifiers key_modifiers = std::get<1>(key_code_and_modifiers);
+
+            auto modifiers_str = enum_key_modifiers_to_str(key_modifiers);
+
+#ifdef PRINT_DEBUG_INFO
+            std::cout << "pressed key: " << modifiers_str;
+            if (!modifiers_str.empty()) {
+              std::cout << " + ";
+            }
+            std::cout << "'" << enum_key_code_to_str(pressed_key_code) << "'" << std::endl;
+#endif
+            std::lock_guard<std::mutex> lk(callbacks_mutex_);
+            auto range = callbacks_.equal_range(KeyAndModifiers{pressed_key_code, key_modifiers});
             for (auto it = range.first; it != range.second; ++it) {
-              it->second.callback(it->first);
+              it->second.callback(pressed_key_code, key_modifiers);
             }
           }
         } while (!exit_.load());

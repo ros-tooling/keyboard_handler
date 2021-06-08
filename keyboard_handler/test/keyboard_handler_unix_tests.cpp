@@ -126,7 +126,9 @@ private:
 class MockPlayer : public FakePlayer
 {
 public:
-  MOCK_METHOD(void, callback_func, (KeyboardHandler::KeyCode key_code));
+  MOCK_METHOD(
+    void, callback_func,
+    (KeyboardHandler::KeyCode key_code, KeyboardHandler::KeyModifiers key_modifiers));
 };
 
 class KeyboardHandlerUnixTest : public ::testing::Test
@@ -159,7 +161,7 @@ TEST_F(KeyboardHandlerUnixTest, nullptr_as_callback) {
   ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
   EXPECT_EQ(
     KeyboardHandler::invalid_handle,
-    keyboard_handler.add_key_press_callback(nullptr, KeyboardHandler::KeyCode::CAPITAL_A));
+    keyboard_handler.add_key_press_callback(nullptr, KeyboardHandler::KeyCode::A));
   EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
 }
 
@@ -177,13 +179,14 @@ TEST_F(KeyboardHandlerUnixTest, enum_key_code_to_str) {
 TEST_F(KeyboardHandlerUnixTest, unregister_callback) {
   MockKeyboardHandler keyboard_handler(read_fn_);
   const std::string terminal_seq =
-    keyboard_handler.get_terminal_sequence(KeyboardHandler::KeyCode::CAPITAL_E);
+    keyboard_handler.get_terminal_sequence(KeyboardHandler::KeyCode::E);
 
-  auto lambda_as_callback = [](KeyboardHandler::KeyCode key_code) {
+  auto lambda_as_callback = [](KeyboardHandler::KeyCode key_code,
+      KeyboardHandler::KeyModifiers key_modifiers) {
       ASSERT_FALSE(true) << "This code should not be called \n";
     };
   auto callback_handle = keyboard_handler.add_key_press_callback(
-    lambda_as_callback, KeyboardHandler::KeyCode::CAPITAL_E);
+    lambda_as_callback, KeyboardHandler::KeyCode::E, KeyboardHandler::KeyModifiers::NONE);
 
   EXPECT_NE(callback_handle, KeyboardHandler::invalid_handle);
   EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 1U);
@@ -202,11 +205,12 @@ TEST_F(KeyboardHandlerUnixTest, stdin_is_not_a_terminal_device) {
   MockKeyboardHandler keyboard_handler(read_fn_, isatty_fail);
   ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
 
-  auto callback = [](KeyboardHandler::KeyCode key_code) {
+  auto callback = [](KeyboardHandler::KeyCode key_code,
+      KeyboardHandler::KeyModifiers key_modifiers) {
       ASSERT_FALSE(true) << "This code should not be called \n";
     };
   auto callback_handle = keyboard_handler.add_key_press_callback(
-    callback, KeyboardHandler::KeyCode::CAPITAL_E);
+    callback, KeyboardHandler::KeyCode::E, KeyboardHandler::KeyModifiers::NONE);
   EXPECT_EQ(callback_handle, KeyboardHandler::invalid_handle);
 }
 
@@ -268,20 +272,23 @@ TEST_F(KeyboardHandlerUnixTest, weak_ptr_in_callbacks_and_deleted_objects) {
 }
 
 TEST_F(KeyboardHandlerUnixTest, global_function_as_callback) {
-  testing::MockFunction<void(KeyboardHandler::KeyCode key_code)> mock_global_callback;
+  using KeyCode = KeyboardHandler::KeyCode;
+  using KeyModifiers = KeyboardHandler::KeyModifiers;
+  testing::MockFunction<void(KeyCode key_code, KeyModifiers key_modifiers)> mock_global_callback;
+
   EXPECT_CALL(
-    mock_global_callback,
-    Call(Eq(KeyboardHandler::KeyCode::CAPITAL_E))).Times(AtLeast(1));
+    mock_global_callback, Call(Eq(KeyCode::E), Eq(KeyModifiers::SHIFT))).Times(AtLeast(1));
 
   MockKeyboardHandler keyboard_handler(read_fn_);
-  const std::string terminal_seq =
-    keyboard_handler.get_terminal_sequence(KeyboardHandler::KeyCode::CAPITAL_E);
+  const std::string terminal_seq = "E";
 
   ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
   EXPECT_NE(
     KeyboardHandler::invalid_handle,
     keyboard_handler.add_key_press_callback(
-      mock_global_callback.AsStdFunction(), KeyboardHandler::KeyCode::CAPITAL_E));
+      mock_global_callback.AsStdFunction(),
+      KeyCode::E, KeyModifiers::SHIFT));
+
   EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 1U);
   g_system_calls_stub->read_will_return_once(terminal_seq);
 }
@@ -291,17 +298,22 @@ TEST_F(KeyboardHandlerUnixTest, class_member_as_callback) {
   const std::string terminal_seq =
     keyboard_handler.get_terminal_sequence(KeyboardHandler::KeyCode::CURSOR_DOWN);
 
-  std::shared_ptr<NiceMock<MockPlayer>> mock_player_shared_ptr(new NiceMock<MockPlayer>());
+  std::shared_ptr<MockPlayer> mock_player_shared_ptr(new MockPlayer());
   EXPECT_CALL(
     *mock_player_shared_ptr,
-    callback_func(Eq(KeyboardHandler::KeyCode::CURSOR_DOWN))).Times(AtLeast(1));
+    callback_func(
+      Eq(KeyboardHandler::KeyCode::CURSOR_DOWN),
+      Eq(KeyboardHandler::KeyModifiers::NONE))).Times(AtLeast(1));
   EXPECT_CALL(
     *mock_player_shared_ptr,
-    callback_func(Eq(KeyboardHandler::KeyCode::CURSOR_UP))).Times(0);
+    callback_func(Eq(KeyboardHandler::KeyCode::CURSOR_UP), testing::_)).Times(0);
+
+  std::shared_ptr<FakePlayer> fake_player_shared_ptr(new FakePlayer());
 
   auto callback = std::bind(
     &MockPlayer::callback_func, mock_player_shared_ptr,
-    std::placeholders::_1);
+    std::placeholders::_1, std::placeholders::_2);
+
   EXPECT_NE(
     KeyboardHandler::invalid_handle,
     keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KeyCode::CURSOR_UP));

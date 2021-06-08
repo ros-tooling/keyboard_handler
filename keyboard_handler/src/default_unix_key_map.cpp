@@ -143,32 +143,8 @@ const KeyboardHandlerUnixImpl::KeyMap KeyboardHandlerUnixImpl::DEFAULT_STATIC_KE
   {KeyCode::RIGHT_ANGLE_BRACKET,  ">"},  // 62
   {KeyCode::QUESTION_MARK,        "?"},  // 63
   {KeyCode::AT,                   "@"},  // 64
-  {KeyCode::CAPITAL_A,            "A"},  // 65  'a' = 97 - 32 = 65
-  {KeyCode::CAPITAL_B,            "B"},  // 66
-  {KeyCode::CAPITAL_C,            "C"},  // 67
-  {KeyCode::CAPITAL_D,            "D"},  // 68
-  {KeyCode::CAPITAL_E,            "E"},  // 69
-  {KeyCode::CAPITAL_F,            "F"},  // 70
-  {KeyCode::CAPITAL_G,            "G"},  // 71
-  {KeyCode::CAPITAL_H,            "H"},  // 72
-  {KeyCode::CAPITAL_I,            "I"},  // 73
-  {KeyCode::CAPITAL_J,            "J"},  // 74
-  {KeyCode::CAPITAL_K,            "K"},  // 75
-  {KeyCode::CAPITAL_L,            "L"},  // 76
-  {KeyCode::CAPITAL_M,            "M"},  // 77
-  {KeyCode::CAPITAL_N,            "N"},  // 78
-  {KeyCode::CAPITAL_O,            "O"},  // 79
-  {KeyCode::CAPITAL_P,            "P"},  // 80
-  {KeyCode::CAPITAL_Q,            "Q"},  // 81
-  {KeyCode::CAPITAL_R,            "R"},  // 82
-  {KeyCode::CAPITAL_S,            "S"},  // 83
-  {KeyCode::CAPITAL_T,            "T"},  // 84
-  {KeyCode::CAPITAL_U,            "U"},  // 85
-  {KeyCode::CAPITAL_V,            "V"},  // 86
-  {KeyCode::CAPITAL_W,            "W"},  // 87
-  {KeyCode::CAPITAL_X,            "X"},  // 88
-  {KeyCode::CAPITAL_Y,            "Y"},  // 89
-  {KeyCode::CAPITAL_Z,            "Z"},  // 90  'z' = 122 - 32 = 90
+//  {KeyCode::CAPITAL_A,            "A"},  // 65  'a' = 97 - 32 = 65
+//  {KeyCode::CAPITAL_Z,            "Z"},  // 90  'z' = 122 - 32 = 90
   {KeyCode::LEFT_SQUARE_BRACKET,  "["},  // 91
   {KeyCode::BACK_SLASH,           xterm_seq::BACK_SLASH},  // 92
   {KeyCode::RIGHT_SQUARE_BRACKET, "]"},  // 93

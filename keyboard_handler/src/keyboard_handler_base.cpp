@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <string>
+#include <sstream>
 #include "keyboard_handler/keyboard_handler_base.hpp"
 
 KEYBOARD_HANDLER_PUBLIC
@@ -20,14 +21,42 @@ constexpr KeyboardHandlerBase::callback_handle_t KeyboardHandlerBase::invalid_ha
 
 KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerBase::callback_handle_t KeyboardHandlerBase::add_key_press_callback(
-  const callback_t & callback, KeyboardHandlerBase::KeyCode key_code)
+  const callback_t & callback, KeyboardHandlerBase::KeyCode key_code,
+  KeyboardHandlerBase::KeyModifiers key_modifiers)
 {
   if (callback == nullptr || !is_init_succeed_) {
     return invalid_handle;
   }
   std::lock_guard<std::mutex> lk(callbacks_mutex_);
-  callbacks_.emplace(key_code, callback_data{get_new_handle(), callback});
+  callbacks_.emplace(
+    KeyAndModifiers{key_code, key_modifiers},
+    callback_data{get_new_handle(), callback});
   return last_handle_;
+}
+
+KEYBOARD_HANDLER_PUBLIC
+bool operator&&(
+  const KeyboardHandlerBase::KeyModifiers & left,
+  const KeyboardHandlerBase::KeyModifiers & right)
+{
+  using KeyModifiers = KeyboardHandlerBase::KeyModifiers;
+  /* *INDENT-OFF* */
+  return static_cast<std::underlying_type_t<KeyModifiers>>(left) &
+         static_cast<std::underlying_type_t<KeyModifiers>>(right);
+  /* *INDENT-ON* */
+}
+
+KEYBOARD_HANDLER_PUBLIC
+KeyboardHandlerBase::KeyModifiers operator|(
+  KeyboardHandlerBase::KeyModifiers left,
+  const KeyboardHandlerBase::KeyModifiers & right)
+{
+  using KeyModifiers = KeyboardHandlerBase::KeyModifiers;
+  /* *INDENT-OFF* */
+  left = static_cast<KeyModifiers>(static_cast<std::underlying_type_t<KeyModifiers>>(left) |
+                                   static_cast<std::underlying_type_t<KeyModifiers>>(right));
+  /* *INDENT-ON* */
+  return left;
 }
 
 KEYBOARD_HANDLER_PUBLIC
@@ -49,6 +78,23 @@ std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code)
     }
   }
   return std::string();
+}
+
+KEYBOARD_HANDLER_PUBLIC
+std::string enum_key_modifiers_to_str(KeyboardHandlerBase::KeyModifiers key_modifiers)
+{
+  using KeyModifiers = KeyboardHandlerBase::KeyModifiers;
+  std::stringstream ss;
+  if (key_modifiers && KeyModifiers::SHIFT) {
+    ss << "SHIFT";
+  }
+  if (key_modifiers && KeyModifiers::CTRL) {
+    ss.str().empty() ? ss << "CTRL" : ss << " CTRL";
+  }
+  if (key_modifiers && KeyModifiers::ALT) {
+    ss.str().empty() ? ss << "ALT" : ss << " ALT";
+  }
+  return ss.str();
 }
 
 KEYBOARD_HANDLER_PUBLIC

@@ -28,10 +28,11 @@ public:
   void register_callbacks(KeyboardHandler & keyboard_handler)
   {
     std::weak_ptr<FakePlayer> player_weak_ptr(shared_from_this());
-    auto callback = [player_weak_ptr](KeyboardHandler::KeyCode key_code) {
+    auto callback = [player_weak_ptr](KeyboardHandler::KeyCode key_code,
+        KeyboardHandler::KeyModifiers key_modifiers) {
         auto player_shared_ptr = player_weak_ptr.lock();
         if (player_shared_ptr) {
-          player_shared_ptr->callback_func(key_code);
+          player_shared_ptr->callback_func(key_code, key_modifiers);
         } else {
           std::cout << "Object for assigned callback FakePlayer() was deleted" << std::endl;
         }
@@ -42,7 +43,9 @@ public:
   virtual ~FakePlayer() = default;
 
 private:
-  void callback_func(KeyboardHandler::KeyCode key_code)
+  void callback_func(
+    KeyboardHandler::KeyCode key_code,
+    KeyboardHandler::KeyModifiers key_modifiers)
   {
     using KeyCode = KeyboardHandler::KeyCode;
     switch (key_code) {

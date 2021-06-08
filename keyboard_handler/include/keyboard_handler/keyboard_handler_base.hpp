@@ -21,14 +21,27 @@
 #include <string>
 #include "keyboard_handler/visibility_control.hpp"
 
+// #define PRINT_DEBUG_INFO
+
 class KeyboardHandlerBase
 {
 public:
   /// \brief Enum for possible keys press combinations which keyboard handler capable to handle.
   enum class KeyCode : uint32_t;
 
+  /// \brief Enum for key modifiers such as CTRL, ALT and SHIFT pressed along side with base key.
+  /// \details Enum represented as a bitmask and could contain multiple values. Multiple values
+  /// can be settled up with overloaded `|` logical OR operator and extracted with `&&` operator.
+  enum class KeyModifiers : uint32_t
+  {
+    NONE  = 0,
+    SHIFT = 1,
+    ALT   = 1 << 1,
+    CTRL  = 1 << 2
+  };
+
   /// \brief Type for callback functions
-  using callback_t = std::function<void (KeyCode)>;
+  using callback_t = std::function<void (KeyCode, KeyModifiers)>;
   using callback_handle_t = uint64_t;
 
   KEYBOARD_HANDLER_PUBLIC
@@ -37,13 +50,16 @@ public:
   /// \brief Adding callable object as a handler for specified key press combination.
   /// \param callback Callable which will be called when key_code will be recognized.
   /// \param key_code Value from enum which corresponds to some predefined key press combination.
+  /// \param key_modifiers Value from enum which corresponds to the key modifiers pressed along
+  /// side with key.
   /// \return Return Newly created callback handle if callback was successfully added to the
   /// keyboard handler, returns invalid_handle if callback is nullptr or keyboard handler wasn't
   /// successfully initialized.
   KEYBOARD_HANDLER_PUBLIC
   callback_handle_t add_key_press_callback(
     const callback_t & callback,
-    KeyboardHandlerBase::KeyCode key_code);
+    KeyboardHandlerBase::KeyCode key_code,
+    KeyboardHandlerBase::KeyModifiers key_modifiers = KeyboardHandlerBase::KeyModifiers::NONE);
 
   /// \brief Delete callback from keyboard handler callback's list
   /// \param handle Callback's handle returned from #add_key_press_callback
@@ -56,9 +72,38 @@ protected:
     callback_handle_t handle;
     callback_t callback;
   };
+
+  struct KeyAndModifiers
+  {
+    KeyCode key_code;
+    KeyModifiers key_modifiers;
+
+    bool operator==(const KeyAndModifiers & rhs) const
+    {
+      return this->key_code == rhs.key_code && this->key_modifiers == rhs.key_modifiers;
+    }
+
+    bool operator!=(const KeyAndModifiers & rhs) const
+    {
+      return !operator==(rhs);
+    }
+  };
+
+  /// \brief Specialized hash function for `unordered_map` with KeyAndModifiers
+  struct key_and_modifiers_hash_fn
+  {
+    std::size_t operator()(const KeyAndModifiers & key_and_mod) const
+    {
+      using key_undertype = std::underlying_type_t<KeyCode>;
+      using mods_undertype = std::underlying_type_t<KeyModifiers>;
+      return std::hash<mods_undertype>()(static_cast<mods_undertype>(key_and_mod.key_modifiers)) ^
+             (std::hash<key_undertype>()(static_cast<key_undertype>(key_and_mod.key_code)) << 3);
+    }
+  };
+
   bool is_init_succeed_ = false;
   std::mutex callbacks_mutex_;
-  std::unordered_multimap<KeyCode, callback_data> callbacks_;
+  std::unordered_multimap<KeyAndModifiers, callback_data, key_and_modifiers_hash_fn> callbacks_;
 
 private:
   callback_handle_t get_new_handle();
@@ -100,32 +145,6 @@ enum class KeyboardHandlerBase::KeyCode: uint32_t
   RIGHT_ANGLE_BRACKET,
   QUESTION_MARK,
   AT,
-  CAPITAL_A,
-  CAPITAL_B,
-  CAPITAL_C,
-  CAPITAL_D,
-  CAPITAL_E,
-  CAPITAL_F,
-  CAPITAL_G,
-  CAPITAL_H,
-  CAPITAL_I,
-  CAPITAL_J,
-  CAPITAL_K,
-  CAPITAL_L,
-  CAPITAL_M,
-  CAPITAL_N,
-  CAPITAL_O,
-  CAPITAL_P,
-  CAPITAL_Q,
-  CAPITAL_R,
-  CAPITAL_S,
-  CAPITAL_T,
-  CAPITAL_U,
-  CAPITAL_V,
-  CAPITAL_W,
-  CAPITAL_X,
-  CAPITAL_Y,
-  CAPITAL_Z,
   LEFT_SQUARE_BRACKET,
   BACK_SLASH,
   RIGHT_SQUARE_BRACKET,
@@ -203,6 +222,23 @@ enum class KeyboardHandlerBase::KeyCode: uint32_t
   END_OF_KEY_CODE_ENUM
 };
 
+/// \brief  Logical AND operator for KeyModifiers enum represented as a bitmask.
+/// \return true if testing value in one of the operands present in a bitmask given in another
+/// operand, otherwise false.
+KEYBOARD_HANDLER_PUBLIC
+bool operator&&(
+  const KeyboardHandlerBase::KeyModifiers & left,
+  const KeyboardHandlerBase::KeyModifiers & right);
+
+/// \brief  Logical OR operator for KeyModifiers enum represented as a bitmask.
+/// \param left KeyModifiers enum bitmask
+/// \param right Modifier value to set in bitmask
+/// \return new KeyModifiers bitmask value with settled bit from right side parameter
+KEYBOARD_HANDLER_PUBLIC
+KeyboardHandlerBase::KeyModifiers operator|(
+  KeyboardHandlerBase::KeyModifiers left,
+  const KeyboardHandlerBase::KeyModifiers & right);
+
 /// \brief Prefix increment operator for KeyCode enum values
 KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerBase::KeyCode & operator++(KeyboardHandlerBase::KeyCode & key_code);
@@ -275,32 +311,6 @@ static const KeyCodeToStrMap ENUM_KEY_TO_STR_MAP[] {
   {KeyboardHandlerBase::KeyCode::X, "x"},
   {KeyboardHandlerBase::KeyCode::Y, "y"},
   {KeyboardHandlerBase::KeyCode::Z, "z"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_A, "A"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_B, "B"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_C, "C"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_D, "D"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_E, "E"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_F, "F"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_G, "G"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_H, "H"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_I, "I"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_J, "J"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_K, "K"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_L, "L"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_M, "M"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_N, "N"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_O, "O"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_P, "P"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_Q, "Q"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_R, "R"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_S, "S"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_T, "T"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_U, "U"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_V, "V"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_W, "W"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_X, "X"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_Y, "Y"},
-  {KeyboardHandlerBase::KeyCode::CAPITAL_Z, "Z"},
   {KeyboardHandlerBase::KeyCode::LEFT_SQUARE_BRACKET, "["},
   {KeyboardHandlerBase::KeyCode::BACK_SLASH, "BACK_SLASH"},
   {KeyboardHandlerBase::KeyCode::RIGHT_SQUARE_BRACKET, "]"},
@@ -356,5 +366,11 @@ static const KeyCodeToStrMap ENUM_KEY_TO_STR_MAP[] {
 /// \return String corresponding to the specified enum value in ENUM_KEY_TO_STR_MAP lookup table.
 KEYBOARD_HANDLER_PUBLIC
 std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code);
+
+/// \brief Translate KeyModifiers enum value to it's string representation.
+/// \param key_modifiers bitmask with key modifiers
+/// \return String corresponding to the specified enum value.
+KEYBOARD_HANDLER_PUBLIC
+std::string enum_key_modifiers_to_str(KeyboardHandlerBase::KeyModifiers key_modifiers);
 
 #endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_BASE_HPP_
