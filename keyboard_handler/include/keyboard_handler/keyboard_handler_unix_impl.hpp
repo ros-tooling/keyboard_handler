@@ -26,6 +26,11 @@
 #include "keyboard_handler_base.hpp"
 
 /// \brief Unix (Posix) specific implementation of keyboard handler class.
+/// \note Design and implementation limitations:
+/// Can't correctly detect CTRL + 0..9 number keys.
+/// Can't correctly detect CTRL, ALT, SHIFT modifiers with F1..F12 and other control keys.
+/// Instead of CTRL + SHIFT + key will be detected only CTRL + key.
+/// Some keys might be incorrectly detected with multiple key modifiers pressed at the same time.
 class KeyboardHandlerUnixImpl : public KeyboardHandlerBase
 {
 public:

@@ -29,6 +29,7 @@
 /// Can't detect CTRL + 0..9 number keys.
 /// Can't detect ALT + F1..12 keys.
 /// Instead of CTRL + SHIFT + key will be detected only CTRL + key.
+/// Some keys might be incorrectly detected with multiple key modifiers pressed at the same time.
 class KeyboardHandlerWindowsImpl : public KeyboardHandlerBase
 {
 public:
