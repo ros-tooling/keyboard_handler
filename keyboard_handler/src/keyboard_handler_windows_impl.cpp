@@ -13,11 +13,13 @@
 // limitations under the License.
 
 #ifdef _WIN32
-#include <stdio.h>
 #include <conio.h>
 #include <io.h>
-#include <iostream>
+#include <stdio.h>
+#include <windows.h>
 #include <exception>
+#include <iostream>
+#include <tuple>
 #include "keyboard_handler/keyboard_handler_windows_impl.hpp"
 
 KEYBOARD_HANDLER_PUBLIC
@@ -65,8 +67,12 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl(
         do {
           if (kbhit_fn()) {
             WinKeyCode win_key_code{WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
+            KeyModifiers key_modifiers = KeyModifiers::NONE;
             int ch = getch_fn();
             win_key_code.first = ch;
+            if (::GetAsyncKeyState(VK_MENU) & 0x8000) {
+              key_modifiers = KeyModifiers::ALT;
+            }
             // When reading a function key or an arrow key, getch function must be called twice;
             // the first call returns 0 or 0xE0, and the second call returns the actual key code.
             // https://docs.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2012/078sfkak(v=vs.110)
@@ -75,10 +81,21 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl(
               ch = getch_fn();
               win_key_code.second = ch;
             }
-            KeyCode pressed_key_code = win_key_code_to_enum(win_key_code);
 
-            KeyModifiers key_modifiers{};  // TODO(morlov): Add parser for KeyModifiers
+            auto key_code_and_modifiers = win_key_code_to_enums(win_key_code);
+            KeyCode pressed_key_code = std::get<0>(key_code_and_modifiers);
+            key_modifiers = key_modifiers | std::get<1>(key_code_and_modifiers);
 
+#ifdef PRINT_DEBUG_INFO
+            std::cout << "Pressed first key code = " << win_key_code.first << ". ";
+            std::cout << "Second code = " << win_key_code.second << ".";
+            auto modifiers_str = enum_key_modifiers_to_str(key_modifiers);
+            std::cout << " Detected as pressed key: " << modifiers_str;
+            if (!modifiers_str.empty()) {
+              std::cout << " + ";
+            }
+            std::cout << "'" << enum_key_code_to_str(pressed_key_code) << "'" << std::endl;
+#endif
             std::lock_guard<std::mutex> lk(callbacks_mutex_);
             auto range = callbacks_.equal_range(KeyAndModifiers{pressed_key_code, key_modifiers});
             for (auto it = range.first; it != range.second; ++it) {
@@ -113,14 +130,56 @@ KeyboardHandlerWindowsImpl::~KeyboardHandlerWindowsImpl()
 }
 
 KEYBOARD_HANDLER_PUBLIC
-KeyboardHandlerBase::KeyCode
-KeyboardHandlerWindowsImpl::win_key_code_to_enum(const WinKeyCode & win_key_code) const
+std::tuple<KeyboardHandlerBase::KeyCode, KeyboardHandlerBase::KeyModifiers>
+KeyboardHandlerWindowsImpl::win_key_code_to_enums(WinKeyCode win_key_code) const
 {
+  KeyCode pressed_key_code = KeyCode::UNKNOWN;
+  KeyModifiers key_modifiers = KeyModifiers::NONE;
+
+  if (win_key_code.first == 0 && win_key_code.second >= 94 && win_key_code.second <= 103) {
+    win_key_code.second -= 35;  // F1..F10
+    key_modifiers = key_modifiers | KeyModifiers::CTRL;
+  }
+
+  if (win_key_code.first == 0xE0 && (win_key_code.second == 138 || win_key_code.second == 137)) {
+    win_key_code.second -= 4;  // F11 and F12
+    key_modifiers = key_modifiers | KeyModifiers::CTRL;
+  }
+
+  if (win_key_code.first == 0 && win_key_code.second >= 84 && win_key_code.second <= 93) {
+    win_key_code.second -= 25;  // F1..F10
+    key_modifiers = key_modifiers | KeyModifiers::SHIFT;
+  }
+
+  if (win_key_code.first == 0xE0 && (win_key_code.second == 135 || win_key_code.second == 136)) {
+    win_key_code.second -= 2;  // F11 and F12
+    key_modifiers = key_modifiers | KeyModifiers::SHIFT;
+  }
+
+  if (win_key_code.first >= 'A' && win_key_code.first <= 'Z') {
+    win_key_code.first += 32;
+    key_modifiers = key_modifiers | KeyModifiers::SHIFT;
+  }
+
   auto key_map_it = key_codes_map_.find(win_key_code);
   if (key_map_it != key_codes_map_.end()) {
-    return key_map_it->second;
+    pressed_key_code = key_map_it->second;
   }
-  return KeyboardHandlerBase::KeyCode::UNKNOWN;
+
+  // first search in key_codes_map_
+  if (pressed_key_code == KeyCode::UNKNOWN && win_key_code.second == WinKeyCode::NOT_A_KEY &&
+    win_key_code.first >= 0 && win_key_code.first <= 26)
+  {
+    win_key_code.first += 96;  // small chars
+    key_modifiers = key_modifiers | KeyModifiers::CTRL;
+
+    auto key_map_it = key_codes_map_.find(win_key_code);
+    if (key_map_it != key_codes_map_.end()) {
+      pressed_key_code = key_map_it->second;
+    }
+  }
+
+  return std::make_tuple(pressed_key_code, key_modifiers);
 }
 
 KEYBOARD_HANDLER_PUBLIC

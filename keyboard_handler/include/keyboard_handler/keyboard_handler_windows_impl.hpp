@@ -19,10 +19,16 @@
 #include <thread>
 #include <unordered_map>
 #include <stdexcept>
+#include <tuple>
 #include "keyboard_handler/visibility_control.hpp"
 #include "keyboard_handler_base.hpp"
 
 /// \brief Windows specific implementation of keyboard handler class.
+/// \note Design and implementation limitations:
+/// Can't detect CTRL + ALT combinations.
+/// Can't detect CTRL + 0..9 number keys.
+/// Can't detect ALT + F1..12 keys.
+/// Instead of CTRL + SHIFT + key will be detected only CTRL + key.
 class KeyboardHandlerWindowsImpl : public KeyboardHandlerBase
 {
 public:
@@ -73,14 +79,13 @@ public:
   KEYBOARD_HANDLER_PUBLIC
   virtual ~KeyboardHandlerWindowsImpl();
 
-  /// \brief Translates WinKeyCode to the internally defined KeyCode enum value.
+  /// \brief Translates WinKeyCode to the key code and key modifiers enum values.
   /// \param win_key_code Key codes returning by Windows OS in response to the pressing keyboard
   /// keys.
-  /// \return Returns KeyboardHandlerBase::KeyCode enum value corresponding to the WinKeyCode in
-  /// inner lookup table. If KeyCode enum value not found in the lookup table will return
-  /// KeyboardHandlerBase::KeyCode::UNKNOWN value.
+  /// \return tuple key code and code modifiers mask.
   KEYBOARD_HANDLER_PUBLIC
-  KeyboardHandlerBase::KeyCode win_key_code_to_enum(const WinKeyCode & win_key_code) const;
+  std::tuple<KeyboardHandlerBase::KeyCode, KeyboardHandlerBase::KeyModifiers>
+  win_key_code_to_enums(WinKeyCode win_key_code) const;
 
   /// \brief Translates internally defined KeyCode enum value to the corresponding
   /// WinKeyCode registered in inner look up table.
