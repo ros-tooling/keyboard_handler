@@ -175,9 +175,8 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
             KeyCode pressed_key_code = std::get<0>(key_code_and_modifiers);
             KeyModifiers key_modifiers = std::get<1>(key_code_and_modifiers);
 
-            auto modifiers_str = enum_key_modifiers_to_str(key_modifiers);
-
 #ifdef PRINT_DEBUG_INFO
+            auto modifiers_str = enum_key_modifiers_to_str(key_modifiers);
             std::cout << "pressed key: " << modifiers_str;
             if (!modifiers_str.empty()) {
               std::cout << " + ";
