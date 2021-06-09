@@ -166,7 +166,7 @@ const KeyboardHandlerUnixImpl::KeyMap KeyboardHandlerUnixImpl::DEFAULT_STATIC_KE
   {KeyCode::Z,                    "z"},  // 122
   {KeyCode::LEFT_CURLY_BRACKET,   "{"},  // 123
   {KeyCode::VERTICAL_BAR,         "|"},  // 124
-  {KeyCode::RIGHT_CURLY_BRACKET,  "{"},  // 125
+  {KeyCode::RIGHT_CURLY_BRACKET,  "}"},  // 125
   {KeyCode::TILDA,                "~"},  // 126
   {KeyCode::BACK_SPACE,           xterm_seq::BACK_SPACE},  // 127
 };
