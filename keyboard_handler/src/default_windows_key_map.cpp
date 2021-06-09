@@ -27,7 +27,7 @@ const KeyboardHandlerWindowsImpl::KeyMap KeyboardHandlerWindowsImpl::DEFAULT_STA
   {KeyCode::CURSOR_DOWN,          {0xE0, 80}},
   {KeyCode::PG_DOWN,              {0xE0, 81}},
   {KeyCode::INSERT,               {0xE0, 82}},
-  {KeyCode::DELETE,               {0xE0, 83}},
+  {KeyCode::DELETE_KEY,           {0xE0, 83}},
 
   {KeyCode::F1,                   {0,    59}},
   {KeyCode::F2,                   {0,    60}},

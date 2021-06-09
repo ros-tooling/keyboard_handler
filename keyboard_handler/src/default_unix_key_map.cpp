@@ -74,7 +74,7 @@ const KeyboardHandlerUnixImpl::KeyMap KeyboardHandlerUnixImpl::DEFAULT_STATIC_KE
   {KeyCode::CURSOR_DOWN,  xterm_seq::CURSOR_DOWN},
   {KeyCode::CURSOR_RIGHT, xterm_seq::CURSOR_ONE_STEP_RIGHT},
   {KeyCode::CURSOR_LEFT,  xterm_seq::CURSOR_ONE_STEP_LEFT},
-  {KeyCode::DELETE,       xterm_seq::DELETE},
+  {KeyCode::DELETE_KEY,   xterm_seq::DELETE},
   {KeyCode::END,          xterm_seq::END},
   {KeyCode::PG_DOWN,      xterm_seq::PG_DOWN},
   {KeyCode::PG_UP,        xterm_seq::PG_UP},
