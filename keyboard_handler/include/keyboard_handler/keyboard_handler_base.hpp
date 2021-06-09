@@ -44,6 +44,8 @@ public:
   using callback_t = std::function<void (KeyCode, KeyModifiers)>;
   using callback_handle_t = uint64_t;
 
+  /// \brief Callback handle returning from add_key_press_callback and using as an argument for
+  /// the delete_key_press_callback
   KEYBOARD_HANDLER_PUBLIC
   static constexpr callback_handle_t invalid_handle = 0;
 
