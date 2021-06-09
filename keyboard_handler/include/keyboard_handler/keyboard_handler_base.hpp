@@ -108,8 +108,7 @@ protected:
   std::unordered_multimap<KeyAndModifiers, callback_data, key_and_modifiers_hash_fn> callbacks_;
 
 private:
-  callback_handle_t get_new_handle();
-  callback_handle_t last_handle_ = 0;
+  static callback_handle_t get_new_handle();
 };
 
 enum class KeyboardHandlerBase::KeyCode: uint32_t

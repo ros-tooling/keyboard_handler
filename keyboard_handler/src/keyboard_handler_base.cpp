@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <atomic>
 #include <string>
 #include <sstream>
 #include "keyboard_handler/keyboard_handler_base.hpp"
@@ -28,10 +29,11 @@ KeyboardHandlerBase::callback_handle_t KeyboardHandlerBase::add_key_press_callba
     return invalid_handle;
   }
   std::lock_guard<std::mutex> lk(callbacks_mutex_);
+  callback_handle_t new_handle = get_new_handle();
   callbacks_.emplace(
     KeyAndModifiers{key_code, key_modifiers},
-    callback_data{get_new_handle(), callback});
-  return last_handle_;
+    callback_data{new_handle, callback});
+  return new_handle;
 }
 
 KEYBOARD_HANDLER_PUBLIC
@@ -110,5 +112,6 @@ void KeyboardHandlerBase::delete_key_press_callback(const callback_handle_t & ha
 
 KeyboardHandlerBase::callback_handle_t KeyboardHandlerBase::get_new_handle()
 {
-  return ++last_handle_;
+  static std::atomic<callback_handle_t> handle_count{0};
+  return handle_count.fetch_add(1, std::memory_order_relaxed) + 1;
 }
