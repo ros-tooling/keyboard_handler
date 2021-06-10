@@ -4,7 +4,7 @@ Package providing ability to handle keyboard input via simple interface with cal
 ## Goal
 We need to be able to handle keyboard input in unified way with cross-platform implementation.
 
-##Design requirements:
+## Design requirements:
 * Subscribe to keyboard events via callbacks
 * Subscriptions work with key modifiers (e.g. Shift+F1)
 * Multiple clients can subscribe to the same event
@@ -23,25 +23,31 @@ Inside client class registering for the callbacks could be organized as simple a
   ClientClass1::register_key_press_callbacks(KeyboardHandler & keyboard_handler) 
   {
     keyboard_handler.add_key_press_callback(callback_fn, KeyboardHandler::KeyCode::CURSOR_UP);
-    keyboard_handler.add_key_press_callback(callback_fn, KeyboardHandler::KeyCode::SHIFT_F1);
+    keyboard_handler.add_key_press_callback(callback_fn, 
+                                            KeyboardHandler::KeyCode::A, 
+                                            KeyboardHandler::KeyModifiers::CTRL);
   }
 ```
 To be able to handle multiple events in one callback function and have ability to distinguish 
 them inside, this callback function should have input parameter indicating which key combination 
 handling in the current call. For instance it could be implemented as simple as:
 ```cpp
-  void callback_function(KeyboardHandler::KeyCode key_code)
+  void callback_function(KeyboardHandler::KeyCode key_code, 
+                         KeyboardHandler::KeyModifiers key_modifiers)
   {
     using KeyCode = KeyboardHandler::KeyCode;
     switch (key_code) {
       case KeyCode::CURSOR_UP:
         std::cout << "callback with key code = CURSOR_UP" << std::endl;
       break;
-      case KeyCode::SHIFT_F1:
-        std::cout << "callback for pressed key combination = Shift + F1" << std::endl;
+      case KeyCode::A:
+        if (key_modifiers && KeyboardHandler::KeyModifiers::CTRL) {
+          std::cout << "callback for pressed key combination = CTRL + a" << std::endl;
+        }
       break;
       default:
-       std::cout << "callback with key code = " << static_cast<int32_t>(key_code) << std::endl;
+       std::cout << "callback with key = '" << enum_key_code_to_str(key_code) << "' ";
+       std::cout << "and key modifiers = " << enum_key_modifiers_to_str(key_modifiers) << "\n"; 
       break;
     }
   }
@@ -61,7 +67,7 @@ not better than C or C++ for this case. And here is the rational for that:
 2. Most of the ROS2 code written in C++ and it will be much easy to support and use solution
    written on the same language.
 3. Some of the POSIX compatible OSes doesn't have Python interpreter. For instance 
-   [QNX for safety](https://blackberry.qnx.com/en/software-solutions/embedded-software/qnx-os-for-safety) 
+   [QNX for safety](https://blackberry.qnx.com/en/software-solutions/embedded-software/qnx-os-for-safety)
 
 ## Specific of handling input from keyboard on different platforms
 Processing of the keyboard handling is differ for different operating systems.
@@ -84,8 +90,8 @@ function keys represented as two integer values. Note: for some key combinations
 value could contain '\0' value representing null terminator in regular strings. 
 i.e it is not possible to treat such sequence of bytes as regular strings.
 
-###Specific of handling input from keyboard on POSIX compatible platforms
-POSIX systems support two basic modes of input: canonical and noncanonical. In canonical input 
+### Specific of handling input from keyboard on POSIX compatible platforms
+POSIX systems support two basic modes of input: canonical and non-canonical. In canonical input 
 processing mode, terminal input is processed in lines terminated by newline '\n', EOF, or 
 EOL characters. No input can be read until an entire line has been typed by the user. Most 
 programs use canonical input mode, because this gives the user a way to edit input line by line 
@@ -94,7 +100,7 @@ However to be able to handle single key press, terminal input need to be switche
 noncanonical mode. By design keyboard handler will switch current terminal session to the 
 noncanonical mode during construction and return it to the canonical mode in destructor.
 
-##Handling abnormal program termination via Ctrl+C
+## Handling abnormal program termination via Ctrl+C
 By design keyboard handler not providing ability to transfer `Ctrl+C` key press event to its 
 clients via callbacks. It could be considered as current design limitation.  
 On POSIX compatible platforms when user pressing `Ctrl+C` OS generates specific `SIGINT` signal 
@@ -105,7 +111,7 @@ via pressing `Ctrl+C`. This signal handling could overlap with registered specif
 handler on upper level or inside keyboard handler's clients. It could cause side effects and 
 considering as current design and implementation limitations. 
 
-## Handling cases when client's code subscribed to the key press event got destructed before keyboard handler.
+## Handling cases when client's code subscribed to the key press event got destructed before keyboard handler
 There are two options to properly handle this case:
 1. Keep callback handle returning from `KeyboardHandler::add_key_press_callback(..)` and use it 
    in client destructor to delete callback via explicit call to the 
@@ -137,10 +143,11 @@ There are two options to properly handle this case:
       
         void register_callbacks(KeyboardHandler & keyboard_handler)
         {
-          auto callback = [recorder_weak_ptr = weak_self_](KeyboardHandler::KeyCode key_code) {
+          auto callback = [recorder_weak_ptr = weak_self_](KeyboardHandler::KeyCode key_code,
+              KeyboardHandler::KeyModifiers key_modifiers) {
             auto recorder_shared_ptr = recorder_weak_ptr.lock();
             if (recorder_shared_ptr) {
-              recorder_shared_ptr->callback_func(key_code);
+              recorder_shared_ptr->callback_func(key_code, key_modifiers);
             } else {
               std::cout << "Object for assigned callback was deleted" << std::endl;
             }
@@ -151,7 +158,8 @@ There are two options to properly handle this case:
       private:
         std::weak_ptr<Recorder> weak_self_;
         Recorder();
-        void callback_func(KeyboardHandler::KeyCode key_code);
+        void callback_func(KeyboardHandler::KeyCode key_code, 
+                           KeyboardHandler::KeyModifiers key_modifiers);
       }
       ```
       
@@ -167,10 +175,11 @@ There are two options to properly handle this case:
         void register_callbacks(KeyboardHandler & keyboard_handler)
         {
           std::weak_ptr<Player> player_weak_ptr(shared_from_this());
-          auto callback = [player_weak_ptr](KeyboardHandler::KeyCode key_code) {
+          auto callback = [player_weak_ptr](KeyboardHandler::KeyCode key_code,
+                                            KeyboardHandler::KeyModifiers key_modifiers) {
             auto player_shared_ptr = player_weak_ptr.lock();
             if (player_shared_ptr) {
-              player_shared_ptr->callback_func(key_code);
+              player_shared_ptr->callback_func(key_code, key_modifiers);
             } else {
               std::cout << "Object for assigned callback was deleted" << std::endl;
             }
@@ -182,7 +191,7 @@ There are two options to properly handle this case:
       `Player` class could be instantiated as 
       `std::shared_ptr<Player> player_shared_ptr(new Player());`
       
-## Handling cases when standard input from terminal or console redirected to the file or stream.
+## Handling cases when standard input from terminal or console redirected to the file or stream
 By design keyboard handler rely on the assumption that it will poll on keypress event and then 
 readout pressed keys from standard input. When standard input redirected to be read from the 
 file or stream, keypress even will not happened and logic inside keyboard handler will be 
