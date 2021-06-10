@@ -229,4 +229,16 @@ go in to the special safe state where he will aware about this situation and key
 will be disabled.
 
 Note: By design `KeyboardHandler::add_key_press_callback(..)` API call will return `false` in 
-this case to indicate that handling keypress is not possible in this case.   
+this case to indicate that handling keypress is not possible in this case.
+
+## Known issues
+Due to the current design and implementation limitations keyboard handler has following known 
+issues:
+ - Some keys might be incorrectly detected with multiple key modifiers pressed at the same time.
+ - Keyboard handler not able to correctly detect `CTRL` + `0..9` number keys. 
+ - Instead of `CTRL` + `SHIFT` + `key` will be detected only `CTRL` + `key`.
+ - Unix(POSIX) implementation can't correctly detect `CTRL`, `ALT`, `SHIFT` modifiers with 
+   `F1..F12` and other control keys.
+ - Windows implementation not able to detect `CTRL` + `ALT` + `key` combinations.
+ - Windows implementation not able to detect `ALT` + `F1..12` keys.
+
