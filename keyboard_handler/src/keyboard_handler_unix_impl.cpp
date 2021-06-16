@@ -84,7 +84,7 @@ KeyboardHandlerUnixImpl::parse_input(const char * buff, ssize_t read_bytes)
 
   // first search in key_codes_map_
   if (pressed_key_code == KeyCode::UNKNOWN && bytes_in_keycode == 1 &&
-    buff_to_search[0] >= 0 && buff_to_search[0] <= 26)
+    static_cast<signed char>(buff_to_search[0]) >= 0 && buff_to_search[0] <= 26)
   {
     char original_key_code = buff_to_search[0];
     original_key_code += 96;    // small chars

@@ -53,20 +53,20 @@ static constexpr char F10[] = {27, 91, 50, 49, 126, '\0'};
 static constexpr char F11[] = {27, 91, 50, 51, 126, '\0'};
 static constexpr char F12[] = {27, 91, 50, 52, 126, '\0'};
 
-static constexpr char SHIFT_F1[]  = {27, 91, 49, 59, 50, 80, '\0'};
-static constexpr char SHIFT_F2[]  = {27, 91, 49, 59, 50, 81, '\0'};
-static constexpr char SHIFT_F3[]  = {27, 91, 49, 59, 50, 82, '\0'};
-static constexpr char SHIFT_F4[]  = {27, 91, 49, 59, 50, 83, '\0'};
-static constexpr char SHIFT_F5[]  = {27, 91, 49, 53, 59, 50, 126, '\0'};
+// static constexpr char SHIFT_F1[]  = {27, 91, 49, 59, 50, 80, '\0'};
+// static constexpr char SHIFT_F2[]  = {27, 91, 49, 59, 50, 81, '\0'};
+// static constexpr char SHIFT_F3[]  = {27, 91, 49, 59, 50, 82, '\0'};
+// static constexpr char SHIFT_F4[]  = {27, 91, 49, 59, 50, 83, '\0'};
+// static constexpr char SHIFT_F5[]  = {27, 91, 49, 53, 59, 50, 126, '\0'};
 // Example: The same value for SHIFT_F5[] when numbers replaced by chars
 // static constexpr char SHIFT_F5[] = {27, 91, '1', '5', ';', '2', '~', '\0'};
-static constexpr char SHIFT_F6[]  = {27, 91, 49, 55, 59, 50, 126, '\0'};
-static constexpr char SHIFT_F7[]  = {27, 91, 49, 56, 59, 50, 126, '\0'};
-static constexpr char SHIFT_F8[]  = {27, 91, 49, 57, 59, 50, 126, '\0'};
-static constexpr char SHIFT_F9[]  = {27, 91, 50, 48, 59, 50, 126, '\0'};
-static constexpr char SHIFT_F10[] = {27, 91, 50, 49, 59, 50, 126, '\0'};
-static constexpr char SHIFT_F11[] = {27, 91, 50, 51, 59, 50, 126, '\0'};
-static constexpr char SHIFT_F12[] = {27, 91, 50, 52, 59, 50, 126, '\0'};
+// static constexpr char SHIFT_F6[]  = {27, 91, 49, 55, 59, 50, 126, '\0'};
+// static constexpr char SHIFT_F7[]  = {27, 91, 49, 56, 59, 50, 126, '\0'};
+// static constexpr char SHIFT_F8[]  = {27, 91, 49, 57, 59, 50, 126, '\0'};
+// static constexpr char SHIFT_F9[]  = {27, 91, 50, 48, 59, 50, 126, '\0'};
+// static constexpr char SHIFT_F10[] = {27, 91, 50, 49, 59, 50, 126, '\0'};
+// static constexpr char SHIFT_F11[] = {27, 91, 50, 51, 59, 50, 126, '\0'};
+// static constexpr char SHIFT_F12[] = {27, 91, 50, 52, 59, 50, 126, '\0'};
 }  // namespace xterm_seq
 
 const KeyboardHandlerUnixImpl::KeyMap KeyboardHandlerUnixImpl::DEFAULT_STATIC_KEY_MAP[]  = {
