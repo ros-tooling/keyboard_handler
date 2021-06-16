@@ -102,6 +102,7 @@ std::string enum_key_modifiers_to_str(KeyboardHandlerBase::KeyModifiers key_modi
 KEYBOARD_HANDLER_PUBLIC
 void KeyboardHandlerBase::delete_key_press_callback(const callback_handle_t & handle) noexcept
 {
+  std::lock_guard<std::mutex> lk(callbacks_mutex_);
   for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
     if (it->second.handle == handle) {
       callbacks_.erase(it);
