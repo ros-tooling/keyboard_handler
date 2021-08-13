@@ -344,6 +344,12 @@ static const KeyCodeToStrMap ENUM_KEY_TO_STR_MAP[] {
 KEYBOARD_HANDLER_PUBLIC
 std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code);
 
+/// \brief Translate str value to it's keycode representation.
+/// \param String key_code_str
+/// \return KeyboardHandlerBase::Keycode
+KEYBOARD_HANDLER_PUBLIC
+KeyboardHandlerBase::KeyCode enum_str_to_key_code(const std::string & key_code_str);
+
 /// \brief Translate KeyModifiers enum value to it's string representation.
 /// \param key_modifiers bitmask with key modifiers
 /// \return String corresponding to the specified enum value.
