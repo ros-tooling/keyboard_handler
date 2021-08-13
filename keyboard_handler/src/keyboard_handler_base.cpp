@@ -82,6 +82,20 @@ std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code)
   return std::string();
 }
 
+/// \brief Translate str value to it's keycode representation.
+/// \param String key_code_str
+/// \return KeyboardHandlerBase::Keycode
+KEYBOARD_HANDLER_PUBLIC
+KeyboardHandlerBase::KeyCode enum_str_to_key_code(const std::string & key_code_str)
+{
+  for (auto & it : ENUM_KEY_TO_STR_MAP) {
+    if (it.str == key_code_str) {
+      return it.inner_code;
+    }
+  }
+  return KeyboardHandlerBase::KeyCode::UNKNOWN;
+}
+
 KEYBOARD_HANDLER_PUBLIC
 std::string enum_key_modifiers_to_str(KeyboardHandlerBase::KeyModifiers key_modifiers)
 {
