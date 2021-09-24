@@ -22,13 +22,11 @@
 #include <tuple>
 #include "keyboard_handler/keyboard_handler_windows_impl.hpp"
 
-KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl()
 : KeyboardHandlerWindowsImpl(_isatty, _kbhit, _getch)
 {
 }
 
-KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl(
   const isattyFunction & isatty_fn,
   const kbhitFunction & kbhit_fn,
@@ -129,7 +127,6 @@ KeyboardHandlerWindowsImpl::~KeyboardHandlerWindowsImpl()
   }
 }
 
-KEYBOARD_HANDLER_PUBLIC
 std::tuple<KeyboardHandlerBase::KeyCode, KeyboardHandlerBase::KeyModifiers>
 KeyboardHandlerWindowsImpl::win_key_code_to_enums(WinKeyCode win_key_code) const
 {
@@ -182,7 +179,6 @@ KeyboardHandlerWindowsImpl::win_key_code_to_enums(WinKeyCode win_key_code) const
   return std::make_tuple(pressed_key_code, key_modifiers);
 }
 
-KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerWindowsImpl::WinKeyCode
 KeyboardHandlerWindowsImpl::enum_key_code_to_win_code(KeyboardHandlerBase::KeyCode key_code) const
 {

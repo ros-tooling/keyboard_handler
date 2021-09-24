@@ -17,10 +17,8 @@
 #include <sstream>
 #include "keyboard_handler/keyboard_handler_base.hpp"
 
-KEYBOARD_HANDLER_PUBLIC
 constexpr KeyboardHandlerBase::callback_handle_t KeyboardHandlerBase::invalid_handle;
 
-KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerBase::callback_handle_t KeyboardHandlerBase::add_key_press_callback(
   const callback_t & callback, KeyboardHandlerBase::KeyCode key_code,
   KeyboardHandlerBase::KeyModifiers key_modifiers)
@@ -36,7 +34,6 @@ KeyboardHandlerBase::callback_handle_t KeyboardHandlerBase::add_key_press_callba
   return new_handle;
 }
 
-KEYBOARD_HANDLER_PUBLIC
 bool operator&&(
   const KeyboardHandlerBase::KeyModifiers & left,
   const KeyboardHandlerBase::KeyModifiers & right)
@@ -48,7 +45,6 @@ bool operator&&(
   /* *INDENT-ON* */
 }
 
-KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerBase::KeyModifiers operator|(
   KeyboardHandlerBase::KeyModifiers left,
   const KeyboardHandlerBase::KeyModifiers & right)
@@ -61,7 +57,6 @@ KeyboardHandlerBase::KeyModifiers operator|(
   return left;
 }
 
-KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerBase::KeyCode & operator++(KeyboardHandlerBase::KeyCode & key_code)
 {
   using KeyCode = KeyboardHandlerBase::KeyCode;
@@ -71,7 +66,6 @@ KeyboardHandlerBase::KeyCode & operator++(KeyboardHandlerBase::KeyCode & key_cod
   return key_code;
 }
 
-KEYBOARD_HANDLER_PUBLIC
 std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code)
 {
   for (auto & it : ENUM_KEY_TO_STR_MAP) {
@@ -85,7 +79,6 @@ std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code)
 /// \brief Translate str value to it's keycode representation.
 /// \param String key_code_str
 /// \return KeyboardHandlerBase::Keycode
-KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerBase::KeyCode enum_str_to_key_code(const std::string & key_code_str)
 {
   for (auto & it : ENUM_KEY_TO_STR_MAP) {
@@ -96,7 +89,6 @@ KeyboardHandlerBase::KeyCode enum_str_to_key_code(const std::string & key_code_s
   return KeyboardHandlerBase::KeyCode::UNKNOWN;
 }
 
-KEYBOARD_HANDLER_PUBLIC
 std::string enum_key_modifiers_to_str(KeyboardHandlerBase::KeyModifiers key_modifiers)
 {
   using KeyModifiers = KeyboardHandlerBase::KeyModifiers;
@@ -113,7 +105,6 @@ std::string enum_key_modifiers_to_str(KeyboardHandlerBase::KeyModifiers key_modi
   return ss.str();
 }
 
-KEYBOARD_HANDLER_PUBLIC
 void KeyboardHandlerBase::delete_key_press_callback(const callback_handle_t & handle) noexcept
 {
   std::lock_guard<std::mutex> lk(callbacks_mutex_);

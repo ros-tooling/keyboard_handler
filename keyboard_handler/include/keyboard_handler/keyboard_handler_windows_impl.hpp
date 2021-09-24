@@ -30,7 +30,7 @@
 /// Can't detect ALT + F1..12 keys.
 /// Instead of CTRL + SHIFT + key will be detected only CTRL + key.
 /// Some keys might be incorrectly detected with multiple key modifiers pressed at the same time.
-class KeyboardHandlerWindowsImpl : public KeyboardHandlerBase
+class KEYBOARD_HANDLER_PUBLIC KeyboardHandlerWindowsImpl : public KeyboardHandlerBase
 {
 public:
   using isattyFunction = std::function<int (int)>;
@@ -73,18 +73,15 @@ public:
   };
 
   /// \brief Default constructor
-  KEYBOARD_HANDLER_PUBLIC
   KeyboardHandlerWindowsImpl();
 
   /// \brief Destructor
-  KEYBOARD_HANDLER_PUBLIC
   virtual ~KeyboardHandlerWindowsImpl();
 
   /// \brief Translates WinKeyCode to the key code and key modifiers enum values.
   /// \param win_key_code Key codes returning by Windows OS in response to the pressing keyboard
   /// keys.
   /// \return tuple key code and code modifiers mask.
-  KEYBOARD_HANDLER_PUBLIC
   std::tuple<KeyboardHandlerBase::KeyCode, KeyboardHandlerBase::KeyModifiers>
   win_key_code_to_enums(WinKeyCode win_key_code) const;
 
@@ -94,7 +91,6 @@ public:
   /// \return Returns WinKeyCode value corresponding to the input KeyCode enum value in the
   /// inner lookup table. If corresponding WinKeyCode value not found in inner LUT will return
   /// WinKeyCode with NOT_A_KEY values.
-  KEYBOARD_HANDLER_PUBLIC
   WinKeyCode enum_key_code_to_win_code(KeyboardHandlerBase::KeyCode key_code) const;
 
 protected:
@@ -102,7 +98,6 @@ protected:
   /// \param isatty_fn Reference to the system _isatty(int) function
   /// \param kbhit_fn Reference to the system _kbhit(void) function
   /// \param getch_fn Reference to the system _getch(void) function
-  KEYBOARD_HANDLER_PUBLIC
   KeyboardHandlerWindowsImpl(
     const isattyFunction & isatty_fn,
     const kbhitFunction & kbhit_fn,

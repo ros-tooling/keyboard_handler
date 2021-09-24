@@ -23,7 +23,7 @@
 
 // #define PRINT_DEBUG_INFO
 
-class KeyboardHandlerBase
+class KEYBOARD_HANDLER_PUBLIC KeyboardHandlerBase
 {
 public:
   /// \brief Enum for possible keys press combinations which keyboard handler capable to handle.
@@ -46,7 +46,6 @@ public:
 
   /// \brief Callback handle returning from add_key_press_callback and using as an argument for
   /// the delete_key_press_callback
-  KEYBOARD_HANDLER_PUBLIC
   static constexpr callback_handle_t invalid_handle = 0;
 
   /// \brief Adding callable object as a handler for specified key press combination.
@@ -57,7 +56,6 @@ public:
   /// \return Return Newly created callback handle if callback was successfully added to the
   /// keyboard handler, returns invalid_handle if callback is nullptr or keyboard handler wasn't
   /// successfully initialized.
-  KEYBOARD_HANDLER_PUBLIC
   callback_handle_t add_key_press_callback(
     const callback_t & callback,
     KeyboardHandlerBase::KeyCode key_code,
@@ -65,7 +63,6 @@ public:
 
   /// \brief Delete callback from keyboard handler callback's list
   /// \param handle Callback's handle returned from #add_key_press_callback
-  KEYBOARD_HANDLER_PUBLIC
   void delete_key_press_callback(const callback_handle_t & handle) noexcept;
 
 protected:

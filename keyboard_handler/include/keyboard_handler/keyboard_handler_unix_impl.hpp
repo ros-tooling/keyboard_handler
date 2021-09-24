@@ -31,7 +31,7 @@
 /// Can't correctly detect CTRL, ALT, SHIFT modifiers with F1..F12 and other control keys.
 /// Instead of CTRL + SHIFT + key will be detected only CTRL + key.
 /// Some keys might be incorrectly detected with multiple key modifiers pressed at the same time.
-class KeyboardHandlerUnixImpl : public KeyboardHandlerBase
+class KEYBOARD_HANDLER_PUBLIC KeyboardHandlerUnixImpl : public KeyboardHandlerBase
 {
 public:
   using isattyFunction = std::function<int (int)>;
@@ -40,18 +40,15 @@ public:
   using readFunction = std::function<ssize_t(int, void *, size_t)>;
 
   /// \brief Default constructor
-  KEYBOARD_HANDLER_PUBLIC
   KeyboardHandlerUnixImpl();
 
   /// \brief destructor
-  KEYBOARD_HANDLER_PUBLIC
   virtual ~KeyboardHandlerUnixImpl();
 
   /// \brief Translates specified key press combination to the corresponding registered sequence of
   /// characters returning by terminal in response to the pressing keyboard keys.
   /// \param key_code Value from enum which corresponds to some predefined key press combination.
   /// \return Returns string with sequence of characters expecting to be returned by terminal.
-  KEYBOARD_HANDLER_PUBLIC
   std::string get_terminal_sequence(KeyboardHandlerUnixImpl::KeyCode key_code);
 
 protected:
@@ -61,7 +58,6 @@ protected:
   /// \param tcgetattr_fn Reference to the system tcgetattr(int, struct termios *) function
   /// \param tcsetattr_fn Reference to the system tcsetattr(int, int, const struct termios *)
   /// function
-  KEYBOARD_HANDLER_PUBLIC
   KeyboardHandlerUnixImpl(
     const readFunction & read_fn,
     const isattyFunction & isatty_fn,

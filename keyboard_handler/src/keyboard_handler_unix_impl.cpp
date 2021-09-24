@@ -38,7 +38,6 @@ void quit(int sig)
 }
 }  // namespace
 
-KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
 : KeyboardHandlerUnixImpl(read, isatty, tcgetattr, tcsetattr) {}
 
@@ -99,7 +98,6 @@ KeyboardHandlerUnixImpl::parse_input(const char * buff, ssize_t read_bytes)
   return std::make_tuple(pressed_key_code, key_modifiers);
 }
 
-KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
   const readFunction & read_fn,
   const isattyFunction & isatty_fn,
@@ -229,7 +227,6 @@ KeyboardHandlerUnixImpl::~KeyboardHandlerUnixImpl()
   }
 }
 
-KEYBOARD_HANDLER_PUBLIC
 std::string
 KeyboardHandlerUnixImpl::get_terminal_sequence(KeyboardHandlerUnixImpl::KeyCode key_code)
 {
