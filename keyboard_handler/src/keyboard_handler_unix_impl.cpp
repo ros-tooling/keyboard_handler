@@ -14,7 +14,6 @@
 
 #ifndef _WIN32
 #include <unistd.h>
-#include <termios.h>
 #include <algorithm>
 #include <csignal>
 #include <exception>
@@ -23,24 +22,43 @@
 #include <tuple>
 #include "keyboard_handler/keyboard_handler_unix_impl.hpp"
 
+struct termios KeyboardHandlerUnixImpl::old_term_settings_ = {};
+KeyboardHandlerUnixImpl::tcsetattrFunction KeyboardHandlerUnixImpl::tcsetattr_fn_ = tcsetattr;
+KeyboardHandlerUnixImpl::signal_handler_type KeyboardHandlerUnixImpl::old_sigint_handler_ =
+  SIG_DFL;
+
 namespace
 {
-struct termios old_term_settings {};
-
-void quit(int sig)
+static void on_signal(int signal_number)
 {
-  (void)sig;
+  auto old_sigint_handler = KeyboardHandlerUnixImpl::get_old_sigint_handler();
   // Restore buffer mode for stdin
-  if (tcsetattr(fileno(stdin), TCSANOW, &old_term_settings) == -1) {
-    exit(EXIT_FAILURE);
+  if (old_sigint_handler == SIG_DFL) {
+    if (KeyboardHandlerUnixImpl::restore_buffer_mode_for_stdin()) {
+      _exit(EXIT_SUCCESS);
+    } else {
+      _exit(EXIT_FAILURE);
+    }
+  } else {
+    KeyboardHandlerUnixImpl::restore_buffer_mode_for_stdin();
   }
-  exit(EXIT_SUCCESS);
+
+  if ((old_sigint_handler != SIG_ERR) &&
+    (old_sigint_handler != SIG_IGN) &&
+    (old_sigint_handler != SIG_DFL))
+  {
+    old_sigint_handler(signal_number);
+  }
 }
 }  // namespace
 
 KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
 : KeyboardHandlerUnixImpl(read, isatty, tcgetattr, tcsetattr) {}
+
+KEYBOARD_HANDLER_PUBLIC
+KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(bool install_signal_handler)
+: KeyboardHandlerUnixImpl(read, isatty, tcgetattr, tcsetattr, install_signal_handler) {}
 
 std::tuple<KeyboardHandlerBase::KeyCode, KeyboardHandlerBase::KeyModifiers>
 KeyboardHandlerUnixImpl::parse_input(const char * buff, ssize_t read_bytes)
@@ -104,7 +122,8 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
   const readFunction & read_fn,
   const isattyFunction & isatty_fn,
   const tcgetattrFunction & tcgetattr_fn,
-  const tcsetattrFunction & tcsetattr_fn)
+  const tcsetattrFunction & tcsetattr_fn,
+  bool install_signal_handler)
 : exit_(false), stdin_fd_(fileno(stdin))
 {
   if (read_fn == nullptr) {
@@ -119,6 +138,7 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
   if (tcsetattr_fn == nullptr) {
     throw std::invalid_argument("KeyboardHandlerUnixImpl tcsetattr_fn must be non-empty.");
   }
+  tcsetattr_fn_ = tcsetattr_fn;
 
   for (size_t i = 0; i < STATIC_KEY_MAP_LENGTH; i++) {
     key_codes_map_.emplace(
@@ -135,21 +155,27 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
   }
 
   struct termios new_term_settings;
-  if (tcgetattr_fn(stdin_fd_, &old_term_settings) == -1) {
+  if (tcgetattr_fn(stdin_fd_, &old_term_settings_) == -1) {
     throw std::runtime_error("Error in tcgetattr(). errno = " + std::to_string(errno));
   }
 
-  signal(SIGINT, quit);  // Setup signal handler to return terminal in original (buffered) mode
-  // in case of abnormal program termination.
+  if (install_signal_handler) {
+    old_sigint_handler_ = std::signal(SIGINT, on_signal);  // Setup signal handler to return
+    // terminal in original (buffered) mode in case of abnormal program termination.
+    if (old_sigint_handler_ == SIG_ERR) {
+      throw std::runtime_error("Error. Can't install SIGINT handler");
+    }
+  }
+  install_signal_handler_ = install_signal_handler;
 
-  new_term_settings = old_term_settings;
+  new_term_settings = old_term_settings_;
   // Set stdin to unbuffered mode for reading directly from the stdin.
   // Disable canonical input and disable echo.
   new_term_settings.c_lflag &= ~(ICANON | ECHO);
   new_term_settings.c_cc[VMIN] = 0;   // 0 means purely timeout driven readout
   new_term_settings.c_cc[VTIME] = 1;  // Wait maximum for 0.1 sec since start of the read() call.
 
-  if (tcsetattr_fn(stdin_fd_, TCSANOW, &new_term_settings) == -1) {
+  if (tcsetattr_fn_(stdin_fd_, TCSANOW, &new_term_settings) == -1) {
     throw std::runtime_error("Error in tcsetattr(). errno = " + std::to_string(errno));
   }
   is_init_succeed_ = true;
@@ -195,7 +221,7 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
       }
 
       // Restore buffer mode for stdin
-      if (tcsetattr_fn(stdin_fd_, TCSANOW, &old_term_settings) == -1) {
+      if (!restore_buffer_mode_for_stdin()) {
         if (thread_exception_ptr == nullptr) {
           try {
             throw std::runtime_error(
@@ -213,6 +239,17 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
 
 KeyboardHandlerUnixImpl::~KeyboardHandlerUnixImpl()
 {
+  if (install_signal_handler_) {
+    signal_handler_type old_sigint_handler = std::signal(SIGINT, old_sigint_handler_);
+    if (old_sigint_handler == SIG_ERR) {
+      std::cerr << "Error. Can't install old SIGINT handler" << std::endl;
+    }
+    if (old_sigint_handler != on_signal) {
+      std::cerr << "Error. Can't return old SIGINT handler, someone override our signal handler" <<
+        std::endl;
+      std::signal(SIGINT, old_sigint_handler);  // return overridden signal handler
+    }
+  }
   exit_ = true;
   if (key_handler_thread_.joinable()) {
     key_handler_thread_.join();
@@ -240,6 +277,19 @@ KeyboardHandlerUnixImpl::get_terminal_sequence(KeyboardHandlerUnixImpl::KeyCode 
     }
   }
   return ret_str;
+}
+
+bool KeyboardHandlerUnixImpl::restore_buffer_mode_for_stdin()
+{
+  if (tcsetattr_fn_(fileno(stdin), TCSANOW, &old_term_settings_) == -1) {
+    return false;
+  }
+  return true;
+}
+
+KeyboardHandlerUnixImpl::signal_handler_type KeyboardHandlerUnixImpl::get_old_sigint_handler()
+{
+  return old_sigint_handler_;
 }
 
 #endif  // #ifndef _WIN32
