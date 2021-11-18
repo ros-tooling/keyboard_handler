@@ -13,8 +13,10 @@
 // limitations under the License.
 
 #ifndef _WIN32
+#include <stdlib.h>
 #include <algorithm>
 #include <condition_variable>
+#include <csignal>
 #include <memory>
 #include <string>
 #include <utility>
@@ -103,8 +105,10 @@ public:
   explicit MockKeyboardHandler(
     const readFunction & read_fn,
     const isattyFunction & isatty_fn = isatty_mock,
-    std::weak_ptr<MockSystemCalls> system_calls_stub = g_system_calls_stub)
-  : KeyboardHandlerUnixImpl(read_fn, isatty_fn, tcgetattr_mock, tcsetattr_mock),
+    std::weak_ptr<MockSystemCalls> system_calls_stub = g_system_calls_stub,
+    bool install_signal_handler = false)
+  : KeyboardHandlerUnixImpl(read_fn, isatty_fn, tcgetattr_mock, tcsetattr_mock,
+      install_signal_handler),
     system_calls_stub_(std::move(system_calls_stub)) {}
 
   ~MockKeyboardHandler() override
@@ -350,5 +354,80 @@ TEST_F(KeyboardHandlerUnixTest, class_member_as_callback) {
     keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KeyCode::CURSOR_DOWN));
 
   g_system_calls_stub->read_will_return_once(terminal_seq);
+}
+
+TEST_F(KeyboardHandlerUnixTest, no_signal_handler) {
+  auto process_id = fork();
+  if (process_id == 0) {  // In child process
+    MockKeyboardHandler keyboard_handler(read_fn_);
+    while (true) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  } else {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    kill(process_id, SIGINT);
+    int child_return_code = EXIT_FAILURE;
+    EXPECT_NE(waitpid(process_id, &child_return_code, 0), -1);
+    EXPECT_NE(WIFSIGNALED(child_return_code), 0);
+    EXPECT_EQ(WTERMSIG(child_return_code), SIGINT);
+    EXPECT_THAT(WEXITSTATUS(child_return_code), EXIT_SUCCESS);
+  }
+}
+
+TEST_F(KeyboardHandlerUnixTest, install_signal_handler_with_exit) {
+  auto process_id = fork();
+  if (process_id == 0) {  // In child process
+    MockKeyboardHandler keyboard_handler(read_fn_, isatty_mock, g_system_calls_stub, true);
+    while (true) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  } else {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    kill(process_id, SIGINT);
+    int status = EXIT_FAILURE;
+    auto wait_ret_code = waitpid(process_id, &status, 0);
+    EXPECT_NE(wait_ret_code, -1);
+    EXPECT_EQ(wait_ret_code, process_id);
+    EXPECT_EQ(WIFSIGNALED(status), 0) << "Process terminated by signal: " << WTERMSIG(status);
+    EXPECT_THAT(WEXITSTATUS(status), EXIT_SUCCESS);
+  }
+}
+
+TEST_F(KeyboardHandlerUnixTest, install_signal_handler_with_old_handler) {
+  constexpr int expected_ret_code = 101;
+  auto process_id = fork();
+  if (process_id == 0) {  // In child process
+    auto on_signal = [](int /* signal */) {
+        _exit(expected_ret_code);
+      };
+    auto old_sigint_handler = std::signal(SIGINT, on_signal);
+    EXPECT_NE(old_sigint_handler, SIG_ERR) << "Can't install SIGINT handler in test";
+    MockKeyboardHandler keyboard_handler(read_fn_, isatty_mock, g_system_calls_stub, true);
+    while (true) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  } else {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    kill(process_id, SIGINT);
+    int status = EXIT_FAILURE;
+    auto wait_ret_code = waitpid(process_id, &status, 0);
+    EXPECT_NE(wait_ret_code, -1);
+    EXPECT_EQ(wait_ret_code, process_id);
+    EXPECT_EQ(WIFSIGNALED(status), 0) << "Process terminated by signal: " << WTERMSIG(status);
+    EXPECT_THAT(WEXITSTATUS(status), expected_ret_code);
+  }
+}
+
+TEST_F(KeyboardHandlerUnixTest, return_old_signal_handler_after_destruction) {
+  auto on_signal = [](int /* signal */) {
+      _exit(EXIT_SUCCESS);
+    };
+  auto old_sigint_handler = std::signal(SIGINT, on_signal);
+  EXPECT_NE(old_sigint_handler, SIG_ERR) << "Can't install SIGINT handler in test";
+  {
+    MockKeyboardHandler keyboard_handler(read_fn_, isatty_mock, g_system_calls_stub, true);
+  }
+  old_sigint_handler = std::signal(SIGINT, SIG_DFL);
+  EXPECT_EQ(old_sigint_handler, on_signal);
 }
 #endif  // #ifndef _WIN32

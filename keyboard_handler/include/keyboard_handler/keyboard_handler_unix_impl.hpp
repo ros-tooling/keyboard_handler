@@ -16,6 +16,7 @@
 #define KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
 
 #ifndef _WIN32
+#include <termios.h>
 #include <string>
 #include <unordered_map>
 #include <atomic>
@@ -38,10 +39,20 @@ public:
   using tcgetattrFunction = std::function<int (int, struct termios *)>;
   using tcsetattrFunction = std::function<int (int, int, const struct termios *)>;
   using readFunction = std::function<ssize_t(int, void *, size_t)>;
+  using signal_handler_type = void (*)(int);
 
   /// \brief Default constructor
   KEYBOARD_HANDLER_PUBLIC
   KeyboardHandlerUnixImpl();
+
+  /// \brief Constructor with option to not install signal handler for SIGINT
+  /// \param install_signal_handler if true signal handler for SIGINT will be installed,
+  /// otherwise not.
+  /// \note In case if install_signal_handler is false caller code should call static
+  /// KeyboardHandlerUnixImpl::restore_buffer_mode_for_stdin() in case of process termination
+  /// caused by signal arrival.
+  KEYBOARD_HANDLER_PUBLIC
+  explicit KeyboardHandlerUnixImpl(bool install_signal_handler);
 
   /// \brief destructor
   KEYBOARD_HANDLER_PUBLIC
@@ -53,6 +64,13 @@ public:
   /// \return Returns string with sequence of characters expecting to be returned by terminal.
   KEYBOARD_HANDLER_PUBLIC
   std::string get_terminal_sequence(KeyboardHandlerUnixImpl::KeyCode key_code);
+
+  /// \brief Restore buffer mode for stdin
+  KEYBOARD_HANDLER_PUBLIC
+  static bool restore_buffer_mode_for_stdin();
+
+  KEYBOARD_HANDLER_PUBLIC
+  static signal_handler_type get_old_sigint_handler();
 
 protected:
   /// \brief Constructor with references to the system functions. Required for unit tests.
@@ -66,7 +84,8 @@ protected:
     const readFunction & read_fn,
     const isattyFunction & isatty_fn,
     const tcgetattrFunction & tcgetattr_fn,
-    const tcsetattrFunction & tcsetattr_fn);
+    const tcsetattrFunction & tcsetattr_fn,
+    bool install_signal_handler = true);
 
   /// \brief Input parser
   /// \param buff null terminated buffer read out from std::in after key press
@@ -90,6 +109,11 @@ protected:
   static const size_t STATIC_KEY_MAP_LENGTH;
 
 private:
+  static struct termios old_term_settings_;
+  static tcsetattrFunction tcsetattr_fn_;
+  static signal_handler_type old_sigint_handler_;
+  bool install_signal_handler_ = false;
+
   std::thread key_handler_thread_;
   std::atomic_bool exit_;
   const int stdin_fd_;
