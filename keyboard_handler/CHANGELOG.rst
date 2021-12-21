@@ -2,6 +2,12 @@
 Changelog for package keyboard_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixes for uncrustify 0.72
+* Install SIGINT handler optionally and call old handler
+* Contributors: Chris Lalancette, Christophe Bedard, Emerson Knapp, Michael Orlov
+
 0.0.2 (2021-09-02)
 ------------------
 * Merge pull request `#5 <https://github.com/ros-tooling/keyboard_handler/issues/5>`_ from lihui815/sonia-str2code
