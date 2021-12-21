@@ -2,8 +2,8 @@
 Changelog for package keyboard_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.3 (2021-12-21)
+------------------
 * Fixes for uncrustify 0.72
 * Install SIGINT handler optionally and call old handler
 * Contributors: Chris Lalancette, Christophe Bedard, Emerson Knapp, Michael Orlov
