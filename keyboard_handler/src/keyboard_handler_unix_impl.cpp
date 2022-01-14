@@ -230,8 +230,8 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
             thread_exception_ptr = std::current_exception();
           }
         } else {
-          std::cerr <<
-            "Error in tcsetattr old_term_settings. errno = " + std::to_string(errno) << std::endl;
+          std::cerr << "Error in tcsetattr old_term_settings. errno = " + std::to_string(errno) <<
+            std::endl;
         }
       }
     });
