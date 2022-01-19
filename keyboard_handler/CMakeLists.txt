@@ -49,6 +49,10 @@ install(
     INCLUDES DESTINATION include
 )
 
+# TODO(sloretz) stop exporting old-style CMake variables in the future
+ament_export_include_directories("include/${PROJECT_NAME}")
+ament_export_libraries(${PROJECT_NAME})
+
 ament_export_targets(export_${PROJECT_NAME})
 
 if(BUILD_TESTING)
