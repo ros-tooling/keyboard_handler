@@ -13,15 +13,13 @@ if(WIN32)
   add_definitions(-DNOMINMAX)
 endif()
 
-set(SOURCES
-    src/keyboard_handler_base.cpp
-    src/default_unix_key_map.cpp
-    src/default_windows_key_map.cpp
-    src/keyboard_handler_unix_impl.cpp
-    src/keyboard_handler_windows_impl.cpp
+add_library(${PROJECT_NAME} SHARED
+  src/keyboard_handler_base.cpp
+  src/default_unix_key_map.cpp
+  src/default_windows_key_map.cpp
+  src/keyboard_handler_unix_impl.cpp
+  src/keyboard_handler_windows_impl.cpp
 )
-
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
@@ -31,19 +29,16 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wthread-safety)
 endif()
 
-target_include_directories(${PROJECT_NAME}
-    PUBLIC
+target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE "KEYBOARD_HANDLER_BUILDING_LIBRARY")
 
-install(
-    DIRECTORY include/
-    DESTINATION include)
+install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 
 install(
     TARGETS ${PROJECT_NAME}
@@ -54,8 +49,10 @@ install(
     INCLUDES DESTINATION include
 )
 
-ament_export_include_directories(include)
+# TODO(sloretz) stop exporting old-style CMake variables in the future
+ament_export_include_directories("include/${PROJECT_NAME}")
 ament_export_libraries(${PROJECT_NAME})
+
 ament_export_targets(export_${PROJECT_NAME})
 
 if(BUILD_TESTING)
@@ -70,7 +67,6 @@ if(BUILD_TESTING)
   )
 
   ament_add_gmock(test_keyboard_handler ${keyboard_handler_test_sources})
-  target_include_directories(test_keyboard_handler PUBLIC include)
   target_link_libraries(test_keyboard_handler ${PROJECT_NAME})
 endif()
 
