@@ -2,8 +2,8 @@
 Changelog for package keyboard_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.4 (2022-03-29)
+------------------
 * Install includes to include/${PROJECT_NAME} and misc CMake fixes (`#12 <https://github.com/ros-tooling/keyboard_handler/issues/12>`_)
 * Contributors: Shane Loretz
 
