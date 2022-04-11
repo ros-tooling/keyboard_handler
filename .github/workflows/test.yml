@@ -19,7 +19,7 @@ jobs:
       with:
         package-name: keyboard_handler
         target-ros2-distro: rolling
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: colcon-logs
         path: ros_ws/log
