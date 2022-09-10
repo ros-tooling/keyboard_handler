@@ -109,13 +109,15 @@ protected:
   static const size_t STATIC_KEY_MAP_LENGTH;
 
 private:
+  static void on_signal(int signal_number);
+
   static struct termios old_term_settings_;
   static tcsetattrFunction tcsetattr_fn_;
   static signal_handler_type old_sigint_handler_;
   bool install_signal_handler_ = false;
 
   std::thread key_handler_thread_;
-  std::atomic_bool exit_;
+  static std::atomic_bool exit_;
   const int stdin_fd_;
   std::unordered_map<std::string, KeyCode> key_codes_map_;
   std::exception_ptr thread_exception_ptr{nullptr};
