@@ -77,6 +77,17 @@ public:
     cv_read_.notify_all();
   }
 
+  void block_read()
+  {
+    {
+      std::lock_guard<std::mutex> lk(read_fn_mutex_);
+      unblock_read_ = false;
+      wait_on_read_ = true;
+    }
+    cv_read_.notify_all();
+  }
+
+
   void read_will_repeatedly_return(const std::string & str)
   {
     {
@@ -116,7 +127,9 @@ public:
     auto sys_calls_stub = system_calls_stub_.lock();
     if (sys_calls_stub) {
       // unlock read to let inner worker thread to finish
-      sys_calls_stub->unblock_read();
+      if (unblock_read_fn_on_destruction_) {
+        sys_calls_stub->unblock_read();
+      }
     }
   }
   size_t get_number_of_registered_callbacks() const
@@ -128,6 +141,8 @@ public:
   {
     return parse_input(buff, read_bytes - 1);  // -1 to strip out null terminator
   }
+
+  bool unblock_read_fn_on_destruction_{true};
 
 private:
   std::weak_ptr<MockSystemCalls> system_calls_stub_;
@@ -162,9 +177,17 @@ public:
     g_system_calls_stub.reset();
   }
 
+  static void on_signal(int signal_number)
+  {
+    running_ = false;
+  }
+
 protected:
   KeyboardHandlerUnixImpl::readFunction read_fn_ = nullptr;
+  static std::atomic_bool running_;
 };
+
+std::atomic_bool KeyboardHandlerUnixTest::running_{true};
 
 TEST_F(KeyboardHandlerUnixTest, nullptr_as_callback) {
   MockKeyboardHandler keyboard_handler(read_fn_);
@@ -411,6 +434,55 @@ TEST_F(KeyboardHandlerUnixTest, install_signal_handler_with_old_handler) {
     kill(process_id, SIGINT);
     int status = EXIT_FAILURE;
     auto wait_ret_code = waitpid(process_id, &status, 0);
+    EXPECT_NE(wait_ret_code, -1);
+    EXPECT_EQ(wait_ret_code, process_id);
+    EXPECT_EQ(WIFSIGNALED(status), 0) << "Process terminated by signal: " << WTERMSIG(status);
+    EXPECT_THAT(WEXITSTATUS(status), expected_ret_code);
+  }
+}
+
+TEST_F(KeyboardHandlerUnixTest, force_exit_from_main_loop_after_signal_handling) {
+  constexpr int expected_ret_code = 101;
+  auto process_id = fork();
+
+  if (process_id == 0) {  // In child process
+    auto old_sigint_handler = std::signal(SIGINT, KeyboardHandlerUnixTest::on_signal);
+    EXPECT_NE(old_sigint_handler, SIG_ERR) << "Can't install SIGINT handler in test";
+    using KeyCode = KeyboardHandler::KeyCode;
+    using KeyModifiers = KeyboardHandler::KeyModifiers;
+    testing::MockFunction<void(KeyCode key_code, KeyModifiers key_modifiers)> mock_global_callback;
+
+    {
+      g_system_calls_stub->read_will_repeatedly_return("E");
+      MockKeyboardHandler keyboard_handler(read_fn_, isatty_mock, g_system_calls_stub, true);
+      keyboard_handler.unblock_read_fn_on_destruction_ = false;
+
+      while (running_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+      // Emulate situation when canonical mode for read_fn_ was settled up in signal handler
+      g_system_calls_stub->block_read();
+    }
+    // If test passes we should cleanly exit from KeyboardHandler destructor.
+    // If test fails KeyboardHandler destructor will hang out forever and parent process will
+    // terminate it by timeout
+    _exit(expected_ret_code);
+  } else {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    kill(process_id, SIGINT);
+
+    int status = EXIT_FAILURE;
+    pid_t wait_ret_code = 0;
+    const std::chrono::seconds ktimeout = std::chrono::seconds(10);
+    std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
+    while (wait_ret_code == 0 && std::chrono::steady_clock::now() - start < ktimeout) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      // WNOHANG checks child processes without causing the caller to be blocked
+      wait_ret_code = waitpid(process_id, &status, WNOHANG);
+    }
+    if (wait_ret_code == 0) {
+      kill(process_id, SIGKILL);
+    }
     EXPECT_NE(wait_ret_code, -1);
     EXPECT_EQ(wait_ret_code, process_id);
     EXPECT_EQ(WIFSIGNALED(status), 0) << "Process terminated by signal: " << WTERMSIG(status);

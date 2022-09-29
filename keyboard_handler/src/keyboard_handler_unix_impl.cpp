@@ -22,14 +22,13 @@
 #include <tuple>
 #include "keyboard_handler/keyboard_handler_unix_impl.hpp"
 
+std::atomic_bool KeyboardHandlerUnixImpl::exit_{false};
 struct termios KeyboardHandlerUnixImpl::old_term_settings_ = {};
 KeyboardHandlerUnixImpl::tcsetattrFunction KeyboardHandlerUnixImpl::tcsetattr_fn_ = tcsetattr;
 KeyboardHandlerUnixImpl::signal_handler_type KeyboardHandlerUnixImpl::old_sigint_handler_ =
   SIG_DFL;
 
-namespace
-{
-static void on_signal(int signal_number)
+void KeyboardHandlerUnixImpl::on_signal(int signal_number)
 {
   auto old_sigint_handler = KeyboardHandlerUnixImpl::get_old_sigint_handler();
   // Restore buffer mode for stdin
@@ -40,6 +39,7 @@ static void on_signal(int signal_number)
       _exit(EXIT_FAILURE);
     }
   } else {
+    exit_ = true;
     KeyboardHandlerUnixImpl::restore_buffer_mode_for_stdin();
   }
 
@@ -50,7 +50,6 @@ static void on_signal(int signal_number)
     old_sigint_handler(signal_number);
   }
 }
-}  // namespace
 
 KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
@@ -124,7 +123,7 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
   const tcgetattrFunction & tcgetattr_fn,
   const tcsetattrFunction & tcsetattr_fn,
   bool install_signal_handler)
-: exit_(false), stdin_fd_(fileno(stdin))
+: stdin_fd_(fileno(stdin))
 {
   if (read_fn == nullptr) {
     throw std::invalid_argument("KeyboardHandlerUnixImpl read_fn must be non-empty.");
@@ -160,7 +159,8 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
   }
 
   if (install_signal_handler) {
-    old_sigint_handler_ = std::signal(SIGINT, on_signal);  // Setup signal handler to return
+    // Setup signal handler to return
+    old_sigint_handler_ = std::signal(SIGINT, KeyboardHandlerUnixImpl::on_signal);
     // terminal in original (buffered) mode in case of abnormal program termination.
     if (old_sigint_handler_ == SIG_ERR) {
       throw std::runtime_error("Error. Can't install SIGINT handler");
@@ -244,7 +244,7 @@ KeyboardHandlerUnixImpl::~KeyboardHandlerUnixImpl()
     if (old_sigint_handler == SIG_ERR) {
       std::cerr << "Error. Can't install old SIGINT handler" << std::endl;
     }
-    if (old_sigint_handler != on_signal) {
+    if (old_sigint_handler != KeyboardHandlerUnixImpl::on_signal) {
       std::cerr << "Error. Can't return old SIGINT handler, someone override our signal handler" <<
         std::endl;
       std::signal(SIGINT, old_sigint_handler);  // return overridden signal handler
