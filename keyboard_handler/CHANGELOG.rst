@@ -2,6 +2,11 @@
 Changelog for package keyboard_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Force exit from main thread on signal handling in `keyboard_handler` (`#23 <https://github.com/ros-tooling/keyboard_handler/issues/23>`_)
+* Contributors: Michael Orlov
+
 0.0.4 (2022-03-29)
 ------------------
 * Install includes to include/${PROJECT_NAME} and misc CMake fixes (`#12 <https://github.com/ros-tooling/keyboard_handler/issues/12>`_)
