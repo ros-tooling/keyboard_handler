@@ -15,7 +15,7 @@ jobs:
     container:
       image: rostooling/setup-ros-docker:ubuntu-jammy-latest
     steps:
-    - uses: ros-tooling/action-ros-ci@v0.2
+    - uses: ros-tooling/action-ros-ci@v0.3
       with:
         package-name: keyboard_handler
         target-ros2-distro: rolling
