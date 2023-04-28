@@ -2,6 +2,9 @@
 Changelog for package keyboard_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.1.0 (2022-11-08)
 ------------------
 * Force exit from main thread on signal handling in `keyboard_handler` (`#23 <https://github.com/ros-tooling/keyboard_handler/issues/23>`_)
