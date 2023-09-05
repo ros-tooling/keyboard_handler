@@ -14,7 +14,7 @@ jobs:
     container:
       image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
