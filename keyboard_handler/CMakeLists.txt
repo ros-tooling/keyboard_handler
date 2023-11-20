@@ -4,8 +4,10 @@ project(keyboard_handler)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 
+# Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
 # Windows supplies macros for min and max by default. We should only use min and max from stl
