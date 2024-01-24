@@ -2,8 +2,8 @@
 Changelog for package keyboard_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.0 (2024-01-24)
+------------------
 * Update to C++17. (`#37 <https://github.com/ros-tooling/keyboard_handler/issues/37>`_)
 * Contributors: Chris Lalancette
 
