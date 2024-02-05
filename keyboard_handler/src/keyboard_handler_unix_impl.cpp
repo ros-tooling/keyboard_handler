@@ -181,7 +181,7 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
   is_init_succeed_ = true;
 
   key_handler_thread_ = std::thread(
-    [ = ]() {
+    [this, read_fn] {
       try {
         static constexpr size_t BUFF_LEN = 10;
         char buff[BUFF_LEN] = {0};
