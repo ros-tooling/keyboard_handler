@@ -27,10 +27,10 @@ public:
 
   void register_callbacks(KeyboardHandler & keyboard_handler)
   {
-    std::weak_ptr<FakePlayer> player_weak_ptr(shared_from_this());
-    auto callback = [player_weak_ptr](KeyboardHandler::KeyCode key_code,
-        KeyboardHandler::KeyModifiers key_modifiers) {
-        auto player_shared_ptr = player_weak_ptr.lock();
+    std::weak_ptr<FakePlayer> weak_ptr(shared_from_this());
+    auto callback =
+      [weak_ptr](KeyboardHandler::KeyCode key_code, KeyboardHandler::KeyModifiers key_modifiers) {
+        auto player_shared_ptr = weak_ptr.lock();
         if (player_shared_ptr) {
           player_shared_ptr->callback_func(key_code, key_modifiers);
         } else {
