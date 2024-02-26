@@ -202,8 +202,8 @@ TEST_F(KeyboardHandlerWindowsTest, nullptr_as_callback) {
 TEST_F(KeyboardHandlerWindowsTest, unregister_callback) {
   EXPECT_CALL(*g_system_calls_stub, getch()).WillRepeatedly(Return('e'));
   MockKeyboardHandler keyboard_handler;
-  auto lambda_as_callback = [](KeyboardHandler::KeyCode key_code,
-      KeyboardHandler::KeyModifiers key_modifiers) {
+  auto lambda_as_callback =
+    [](KeyboardHandler::KeyCode key_code, KeyboardHandler::KeyModifiers key_modifiers) {
       ASSERT_FALSE(true) << "This code should not be called \n";
     };
   auto callback_handle = keyboard_handler.add_key_press_callback(
@@ -225,8 +225,8 @@ TEST_F(KeyboardHandlerWindowsTest, stdin_is_not_a_terminal_device) {
   MockKeyboardHandler keyboard_handler(isatty_fail);
   ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
 
-  auto callback = [](KeyboardHandler::KeyCode key_code,
-      KeyboardHandler::KeyModifiers key_modifiers) {
+  auto callback =
+    [](KeyboardHandler::KeyCode key_code, KeyboardHandler::KeyModifiers key_modifiers) {
       ASSERT_FALSE(true) << "This code should not be called \n";
     };
   auto callback_handle = keyboard_handler.add_key_press_callback(

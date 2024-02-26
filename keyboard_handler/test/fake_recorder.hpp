@@ -36,11 +36,11 @@ public:
 
   void register_callbacks(KeyboardHandler & keyboard_handler)
   {
-    auto callback = [recorder_weak_ptr = weak_self_](KeyboardHandler::KeyCode key_code,
-        KeyboardHandler::KeyModifiers key_modifiers) {
-        auto recorder_shared_ptr = recorder_weak_ptr.lock();
+    auto callback =
+      [weak_ptr = weak_self_](KeyboardHandler::KeyCode code, KeyboardHandler::KeyModifiers mods) {
+        auto recorder_shared_ptr = weak_ptr.lock();
         if (recorder_shared_ptr) {
-          recorder_shared_ptr->callback_func(key_code, key_modifiers);
+          recorder_shared_ptr->callback_func(code, mods);
         } else {
           std::cout << "Object for assigned callback FakeRecorder() was deleted" << std::endl;
         }
