@@ -2,6 +2,12 @@
 Changelog for package keyboard_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Shorten lambdas so newer uncrustify is happier. (`#42 <https://github.com/ros-tooling/keyboard_handler/issues/42>`_)
+* Fixed C++20 warning implicit capture of this in lambda (`#41 <https://github.com/ros-tooling/keyboard_handler/issues/41>`_)
+* Contributors: AiVerisimilitude, Chris Lalancette
+
 0.3.0 (2024-01-24)
 ------------------
 * Update to C++17. (`#37 <https://github.com/ros-tooling/keyboard_handler/issues/37>`_)
