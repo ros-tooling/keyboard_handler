@@ -5,7 +5,7 @@ on:
 
 jobs:
   ament_linters:
-    name: ament_copyright
+    name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
