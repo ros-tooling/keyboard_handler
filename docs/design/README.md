@@ -108,8 +108,16 @@ and if this signal became unhandled current process will be terminated. \
 On POSIX compatible platforms keyboard handler will register it's own signal handler for the 
 `SIGINT` to be able to return terminal input in canonical mode after abnormal program termination 
 via pressing `Ctrl+C`. This signal handling could overlap with registered specific `SIGINT` 
-handler on upper level or inside keyboard handler's clients. It could cause side effects and 
-considering as current design and implementation limitations. 
+handler on upper level or inside keyboard handler's clients. To avoid this overlap keyboard handler
+will save previous `SIGINT` handler and call it after processing its own signal handler. It will 
+also restore the previous `SIGINT` handler in destructor. The keyboard handler constructor has an
+optional parameter `bool install_signal_handler` which by default is set to `true`. If this
+parameter is set to `false`, keyboard handler will not register its own `SIGINT` handler and
+will not restore previous `SIGINT` handler in destructor. This could be useful in cases when client
+code already registered its own `SIGINT` handler and don't want to overlap it with keyboard
+handler's one. In this case client code should be responsible for restoring terminal input in
+canonical mode after abnormal program termination via pressing `Ctrl+C` by calling static method
+`KeyboardHandler::restore_terminal_input_canonical_mode()`.
 
 ## Handling cases when client's code subscribed to the key press event got destructed before keyboard handler
 There are two options to properly handle this case:
@@ -241,4 +249,3 @@ issues:
    `F1..F12` and other control keys.
  - Windows implementation not able to detect `CTRL` + `ALT` + `key` combinations.
  - Windows implementation not able to detect `ALT` + `F1..12` keys.
-
