@@ -2,6 +2,9 @@
 Changelog for package keyboard_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.3.1 (2024-03-28)
 ------------------
 * Shorten lambdas so newer uncrustify is happier. (`#42 <https://github.com/ros-tooling/keyboard_handler/issues/42>`_)
