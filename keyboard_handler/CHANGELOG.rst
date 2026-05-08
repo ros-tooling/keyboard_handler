@@ -2,6 +2,9 @@
 Changelog for package keyboard_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.5.1 (2026-04-30)
 ------------------
 * fix cmake deprecation (`#55 <https://github.com/ros-tooling/keyboard_handler/issues/55>`_)
